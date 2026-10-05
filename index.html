@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Dowy Client - a fast, free Minecraft launcher with 40+ built-in mods.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<title>Dowy Client</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+  /* One centered column over the Dowy title-screen picture: icon, name, download. Single dark look (it's a game launcher). */
+  :root {
+    --bg: #060914;
+    --veil: rgba(6, 9, 20, 0.62);
+    --text: #eef3ff;
+    --muted: #9aa6c4;
+    --blue: #4db8ff;
+    --lime: #b9e63c;
+    --stone: #7d7d7d;
+    --stone-hi: #a5a5a5;
+    --stone-lo: #545454;
+    --edge: #0a0a0a;
+    --font-pixel: "Pixelify Sans", "Courier New", monospace;
+    --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.55 var(--font-body);
+  }
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: url("assets/background.jpg") center / cover no-repeat, var(--bg);
+    filter: saturate(1.15);
+  }
+  .backdrop::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(60% 55% at 50% 42%, rgba(6, 9, 20, 0.15), var(--veil) 70%),
+      linear-gradient(180deg, rgba(6, 9, 20, 0.35), rgba(6, 9, 20, 0.92) 92%);
+  }
+  .page {
+    position: relative;
+    z-index: 1;
+    min-height: 100%;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    padding-inline: 16px;
+  }
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding-block: 64px 40px;
+    text-align: center;
+  }
+  .logo {
+    width: clamp(104px, 22vw, 148px);
+    height: auto;
+    filter: drop-shadow(0 0 28px rgba(77, 184, 255, 0.45)) drop-shadow(0 14px 24px rgba(0, 0, 0, 0.55));
+    animation: float 5s ease-in-out infinite;
+  }
+  @keyframes float { 50% { transform: translateY(-8px); } }
+  h1 {
+    margin: 0;
+    font: 700 clamp(40px, 9vw, 72px)/1 var(--font-pixel);
+    letter-spacing: 0.05em;
+    text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
+    text-wrap: balance;
+  }
+  h1 span { color: var(--blue); }
+  .tagline {
+    margin: 0;
+    max-width: 34ch;
+    color: var(--muted);
+    font-size: 17px;
+    text-wrap: balance;
+  }
+  /* Minecraft-style stone button: black edge, light top-left bevel, dark bottom bevel. */
+  .download {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    padding: 14px 34px 16px;
+    min-width: min(320px, 100%);
+    justify-content: center;
+    border: 3px solid var(--edge);
+    background: var(--stone);
+    box-shadow: inset 3px 3px 0 var(--stone-hi), inset -3px -4px 0 var(--stone-lo), 0 10px 26px rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font: 600 24px/1 var(--font-pixel);
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    text-shadow: 3px 3px 0 #3a3a3a;
+    image-rendering: pixelated;
+    transition: transform 120ms ease, background-color 120ms ease;
+  }
+  .download:hover { background: #6e8fd6; box-shadow: inset 3px 3px 0 #9fb8f0, inset -3px -4px 0 #4a63a0, 0 0 0 3px #fff, 0 12px 30px rgba(77, 184, 255, 0.35); }
+  .download:active { transform: translateY(2px); }
+  .download:focus-visible { outline: 3px solid var(--lime); outline-offset: 4px; }
+  .download svg { width: 22px; height: 22px; flex: none; }
+  .meta {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .features {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+    max-width: 760px;
+  }
+  .features li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 14px;
+    background: rgba(10, 16, 34, 0.7);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    font-size: 14px;
+    min-width: 0;
+  }
+  .features b { font: 600 15px/1 var(--font-pixel); color: var(--lime); letter-spacing: 0.03em; }
+  .block { width: 10px; height: 10px; flex: none; background: var(--lime); box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.25); }
+  .features li:nth-child(even) .block { background: var(--blue); }
+  footer {
+    padding-block: 20px 26px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  footer p { margin: 0 auto; max-width: 62ch; }
+  @media (prefers-reduced-motion: reduce) {
+    .logo { animation: none; }
+    .download { transition: none; }
+  }
+</style>
+
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"></div>
+<div class="page">
+  <main class="hero">
+    <img class="logo" src="assets/icon.png" alt="Dowy Client icon" width="148" height="148">
+    <h1>DOWY <span>CLIENT</span></h1>
+    <p class="tagline">A fast, free Minecraft launcher with 40+ built-in mods, 3D clothes and your own capes.</p>
+    <a class="download" id="download" href="https://github.com/dowyclient/dowyclient.github.io/releases/latest/download/DowyClient-Setup.exe">
+      <svg viewBox="0 0 11 11" aria-hidden="true" shape-rendering="crispEdges"><path fill="#fff" d="M4 0h3v5h2v1H8v1H7v1H6v1H5V8H4V7H3V6H2V5h2zM0 9h1v1h9V9h1v2H0z"/></svg>
+      Download
+    </a>
+    <p class="meta">Windows 10 &amp; 11 &middot; Version 0.4.9 &middot; Free</p>
+    <ul class="features">
+      <li><span class="block"></span><b>40+</b> mods in the Right&nbsp;Shift menu</li>
+      <li><span class="block"></span>Minecraft <b>1.21.6</b> to <b>26.3</b></li>
+      <li><span class="block"></span>Zoom, minimap, waypoints, keystrokes</li>
+      <li><span class="block"></span>Sodium FPS boost built in</li>
+      <li><span class="block"></span><b>3D clothes</b> only Dowy players see</li>
+    </ul>
+  </main>
+  <footer>
+    <p>Playing needs a Minecraft: Java Edition account. Dowy Client is not affiliated with Mojang Studios or Microsoft. Minecraft is a trademark of Mojang AB.</p>
+  </footer>
+</div>
+</body>
+</html>
