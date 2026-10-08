@@ -3,21 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Dowy Client - a fast, free Minecraft launcher with 40+ built-in mods.">
+<meta name="description" content="Dowy Client - a fast, free Minecraft launcher with 40+ built-in mods, 3D clothes, emotes and capes. Supports Minecraft 1.21.6 to 1.21.11 and 26.3.">
+<meta name="theme-color" content="#060914">
+<meta property="og:title" content="Dowy Client">
+<meta property="og:description" content="A fast, free Minecraft launcher with 40+ built-in mods.">
+<meta property="og:image" content="assets/icon.png">
 <link rel="icon" type="image/png" href="assets/icon.png">
 <title>Dowy Client</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
-  /* One centered column over the Dowy title-screen picture: icon, name, download. Single dark look (it's a game launcher). */
   :root {
     --bg: #060914;
-    --veil: rgba(6, 9, 20, 0.62);
+    --panel: rgba(12, 18, 38, 0.72);
+    --panel-hi: rgba(20, 30, 60, 0.85);
+    --line: rgba(255, 255, 255, 0.09);
     --text: #eef3ff;
     --muted: #9aa6c4;
     --blue: #4db8ff;
     --lime: #b9e63c;
+    --purple: #8b7bff;
+    --discord: #5865f2;
     --stone: #7d7d7d;
     --stone-hi: #a5a5a5;
     --stone-lo: #545454;
@@ -27,160 +34,530 @@
     color-scheme: dark;
   }
   * { box-sizing: border-box; }
-  html, body { height: 100%; }
+  html { scroll-behavior: smooth; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font: 16px/1.55 var(--font-body);
+    font: 16px/1.6 var(--font-body);
+    overflow-x: hidden;
   }
-  .backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background: url("assets/background.jpg") center / cover no-repeat, var(--bg);
-    filter: saturate(1.15);
+  a { color: inherit; }
+  svg.i { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---------- Background: slow-zooming title picture, aurora glow, pixel grid, drifting particles ---------- */
+  .bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .bg-img {
+    position: absolute; inset: -4%;
+    background: url("assets/background.jpg") center / cover no-repeat;
+    filter: saturate(1.2) brightness(0.85);
+    animation: kenburns 40s ease-in-out infinite alternate;
   }
-  .backdrop::after {
-    content: "";
-    position: absolute;
-    inset: 0;
+  @keyframes kenburns { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.12) translate(-1.5%, -1%); } }
+  .bg-aurora {
+    position: absolute; inset: -20%;
     background:
-      radial-gradient(60% 55% at 50% 42%, rgba(6, 9, 20, 0.15), var(--veil) 70%),
-      linear-gradient(180deg, rgba(6, 9, 20, 0.35), rgba(6, 9, 20, 0.92) 92%);
+      radial-gradient(40% 35% at 20% 25%, rgba(77, 184, 255, 0.28), transparent 70%),
+      radial-gradient(35% 30% at 80% 20%, rgba(139, 123, 255, 0.24), transparent 70%),
+      radial-gradient(40% 35% at 60% 85%, rgba(185, 230, 60, 0.14), transparent 70%);
+    animation: aurora 18s ease-in-out infinite alternate;
+    mix-blend-mode: screen;
   }
-  .page {
-    position: relative;
-    z-index: 1;
-    min-height: 100%;
-    display: grid;
-    grid-template-rows: 1fr auto;
-    padding-inline: 16px;
+  @keyframes aurora { to { transform: translate(4%, 3%) rotate(6deg); } }
+  .bg-veil {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(70% 60% at 50% 30%, rgba(6, 9, 20, 0.1), rgba(6, 9, 20, 0.7) 75%),
+      linear-gradient(180deg, rgba(6, 9, 20, 0.3), rgba(6, 9, 20, 0.95) 70%);
   }
-  .hero {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 18px;
-    padding-block: 64px 40px;
-    text-align: center;
+  .bg-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent);
   }
-  .logo {
-    width: clamp(104px, 22vw, 148px);
-    height: auto;
-    filter: drop-shadow(0 0 28px rgba(77, 184, 255, 0.45)) drop-shadow(0 14px 24px rgba(0, 0, 0, 0.55));
-    animation: float 5s ease-in-out infinite;
+  .px { position: absolute; bottom: -20px; width: 8px; height: 8px; background: var(--blue); opacity: 0; box-shadow: 0 0 12px currentColor; animation: rise linear infinite; }
+  .px:nth-child(3n) { background: var(--lime); color: var(--lime); }
+  .px:nth-child(3n+1) { color: var(--blue); }
+  .px:nth-child(3n+2) { background: var(--purple); color: var(--purple); width: 6px; height: 6px; }
+  @keyframes rise {
+    0% { transform: translateY(0) rotate(0); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.6; }
+    100% { transform: translateY(-110vh) rotate(180deg); opacity: 0; }
   }
-  @keyframes float { 50% { transform: translateY(-8px); } }
+
+  .page { position: relative; z-index: 1; }
+  .wrap { width: min(1120px, 100%); margin-inline: auto; padding-inline: 16px; }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    background: rgba(6, 9, 20, 0.55);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .wrap { display: flex; align-items: center; gap: 20px; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font: 700 20px/1 var(--font-pixel); letter-spacing: 0.05em; }
+  .brand img { width: 34px; height: 34px; image-rendering: auto; filter: drop-shadow(0 0 10px rgba(77, 184, 255, 0.5)); }
+  .brand span { color: var(--blue); }
+  .nav-links { display: flex; gap: 4px; margin-left: auto; }
+  .nav-links a { padding: 8px 12px; border-radius: 8px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: 15px; transition: color 150ms, background 150ms; }
+  .nav-links a:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
+  .nav-discord { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; background: var(--discord); color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; transition: transform 150ms, box-shadow 150ms; }
+  .nav-discord:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(88, 101, 242, 0.5); }
+  .nav-discord svg { width: 18px; height: 18px; fill: currentColor; }
+  @media (max-width: 720px) { .nav-links { display: none; } .nav-discord { margin-left: auto; } }
+
+  /* ---------- Hero ---------- */
+  .hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 18px; padding-block: 72px 56px; }
+  .logo-wrap { position: relative; width: clamp(130px, 26vw, 180px); aspect-ratio: 1; display: grid; place-items: center; animation: float 5s ease-in-out infinite; }
+  .logo-wrap::before {
+    content: ""; position: absolute; inset: -14%; border-radius: 50%;
+    background: conic-gradient(from 0deg, var(--blue), var(--purple), var(--lime), var(--blue));
+    filter: blur(28px); opacity: 0.55;
+    animation: spin 8s linear infinite;
+  }
+  .logo-wrap::after {
+    content: ""; position: absolute; inset: -6%; border-radius: 50%;
+    border: 2px dashed rgba(255, 255, 255, 0.18);
+    animation: spin 30s linear infinite reverse;
+  }
+  .logo { position: relative; width: 100%; height: auto; filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.6)); transition: transform 300ms cubic-bezier(.2,.9,.3,1.4); }
+  .logo-wrap:hover .logo { transform: scale(1.08) rotate(-4deg); }
+  @keyframes float { 50% { transform: translateY(-10px); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: rgba(185, 230, 60, 0.12); border: 1px solid rgba(185, 230, 60, 0.35); color: var(--lime); font-size: 13px; font-weight: 700; letter-spacing: 0.03em; }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 0 rgba(185, 230, 60, 0.7); animation: ping 2s infinite; }
+  @keyframes ping { 70% { box-shadow: 0 0 0 8px rgba(185, 230, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(185, 230, 60, 0); } }
   h1 {
     margin: 0;
-    font: 700 clamp(40px, 9vw, 72px)/1 var(--font-pixel);
+    font: 700 clamp(46px, 10vw, 88px)/1 var(--font-pixel);
     letter-spacing: 0.05em;
-    text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
-    text-wrap: balance;
+    text-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
   }
-  h1 span { color: var(--blue); }
-  .tagline {
-    margin: 0;
-    max-width: 34ch;
-    color: var(--muted);
-    font-size: 17px;
-    text-wrap: balance;
+  h1 span {
+    background: linear-gradient(90deg, var(--blue), var(--purple), var(--blue));
+    background-size: 200% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: shine 6s linear infinite;
+    filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, 0.55));
+    text-shadow: none;
   }
-  /* Minecraft-style stone button: black edge, light top-left bevel, dark bottom bevel. */
+  @keyframes shine { to { background-position: -200% 0; } }
+  .tagline { margin: 0; max-width: 40ch; color: var(--muted); font-size: 18px; text-wrap: balance; }
+  .cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 8px; }
+
+  /* Minecraft-style stone button */
   .download {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 10px;
-    padding: 14px 34px 16px;
-    min-width: min(320px, 100%);
-    justify-content: center;
+    position: relative; overflow: hidden;
+    display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+    padding: 14px 34px 16px; min-width: min(280px, 100%);
     border: 3px solid var(--edge);
     background: var(--stone);
     box-shadow: inset 3px 3px 0 var(--stone-hi), inset -3px -4px 0 var(--stone-lo), 0 10px 26px rgba(0, 0, 0, 0.45);
-    color: #fff;
-    font: 600 24px/1 var(--font-pixel);
-    letter-spacing: 0.04em;
-    text-decoration: none;
+    color: #fff; font: 600 24px/1 var(--font-pixel); letter-spacing: 0.04em; text-decoration: none;
     text-shadow: 3px 3px 0 #3a3a3a;
-    image-rendering: pixelated;
-    transition: transform 120ms ease, background-color 120ms ease;
+    transition: transform 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
   }
-  .download:hover { background: #6e8fd6; box-shadow: inset 3px 3px 0 #9fb8f0, inset -3px -4px 0 #4a63a0, 0 0 0 3px #fff, 0 12px 30px rgba(77, 184, 255, 0.35); }
-  .download:active { transform: translateY(2px); }
-  .download:focus-visible { outline: 3px solid var(--lime); outline-offset: 4px; }
+  .download::after {
+    content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    transform: skewX(-20deg);
+    animation: sweep 3.5s ease-in-out infinite;
+  }
+  @keyframes sweep { 0%, 60% { left: -60%; } 100% { left: 130%; } }
+  .download:hover { background: #6e8fd6; box-shadow: inset 3px 3px 0 #9fb8f0, inset -3px -4px 0 #4a63a0, 0 0 0 3px #fff, 0 12px 34px rgba(77, 184, 255, 0.45); transform: translateY(-2px); }
+  .download:active { transform: translateY(1px); }
+  .download:focus-visible, .btn-discord:focus-visible { outline: 3px solid var(--lime); outline-offset: 4px; }
   .download svg { width: 22px; height: 22px; flex: none; }
-  .meta {
-    margin: 0;
-    color: var(--muted);
-    font-size: 13px;
-    letter-spacing: 0.02em;
-    font-variant-numeric: tabular-nums;
+  .download.discord { background: var(--discord); box-shadow: inset 3px 3px 0 #8790f7, inset -3px -4px 0 #3c45b5, 0 10px 26px rgba(0, 0, 0, 0.45); text-shadow: 3px 3px 0 #2f379a; }
+  .download.discord:hover { background: #6b77f5; box-shadow: inset 3px 3px 0 #9ca3fa, inset -3px -4px 0 #4650c2, 0 0 0 3px #fff, 0 12px 34px rgba(88, 101, 242, 0.55); }
+  .download.discord svg { fill: #fff; }
+  .meta { margin: 0; color: var(--muted); font-size: 13px; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; }
+  .meta span { display: inline-flex; align-items: center; gap: 6px; }
+  .meta svg.i { width: 15px; height: 15px; color: var(--blue); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: min(760px, 100%); margin-top: 30px; }
+  .stat { padding: 16px 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .stat b { display: block; font: 700 30px/1.1 var(--font-pixel); color: var(--lime); }
+  .stat:nth-child(even) b { color: var(--blue); }
+  .stat small { color: var(--muted); font-size: 13px; }
+  @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+  /* ---------- Sections ---------- */
+  section { padding-block: 72px; }
+  .sec-head { text-align: center; margin-bottom: 40px; }
+  .eyebrow { display: inline-block; font: 600 14px/1 var(--font-pixel); letter-spacing: 0.15em; text-transform: uppercase; color: var(--lime); margin-bottom: 10px; }
+  h2 { margin: 0; font: 700 clamp(30px, 5vw, 44px)/1.1 var(--font-pixel); letter-spacing: 0.03em; text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); }
+  .sec-head p { margin: 12px auto 0; color: var(--muted); max-width: 52ch; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card {
+    position: relative;
+    padding: 24px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    transition: transform 200ms ease, border-color 200ms ease, background 200ms ease, box-shadow 200ms ease;
+    overflow: hidden;
   }
-  .features {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    margin: 18px 0 0;
-    padding: 0;
-    list-style: none;
-    max-width: 760px;
+  .card::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(77, 184, 255, 0.16), transparent 60%);
+    opacity: 0; transition: opacity 200ms;
   }
-  .features li {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 9px 14px;
-    background: rgba(10, 16, 34, 0.7);
-    border: 2px solid rgba(255, 255, 255, 0.08);
-    font-size: 14px;
-    min-width: 0;
+  .card:hover { transform: translateY(-4px); border-color: rgba(77, 184, 255, 0.45); background: var(--panel-hi); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(77, 184, 255, 0.15); }
+  .card:hover::before { opacity: 1; }
+  .ic {
+    width: 52px; height: 52px; display: grid; place-items: center; border-radius: 12px; margin-bottom: 16px;
+    color: var(--c, var(--blue));
+    background: color-mix(in srgb, var(--c, var(--blue)) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c, var(--blue)) 40%, transparent);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--c, var(--blue)) 25%, transparent);
+    transition: transform 300ms cubic-bezier(.2,.9,.3,1.4), box-shadow 200ms;
   }
-  .features b { font: 600 15px/1 var(--font-pixel); color: var(--lime); letter-spacing: 0.03em; }
-  .block { width: 10px; height: 10px; flex: none; background: var(--lime); box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.25); }
-  .features li:nth-child(even) .block { background: var(--blue); }
-  footer {
-    padding-block: 20px 26px;
-    text-align: center;
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.6;
+  .ic svg.i { width: 26px; height: 26px; }
+  .card:hover .ic { transform: scale(1.12) rotate(-6deg); box-shadow: 0 0 34px color-mix(in srgb, var(--c, var(--blue)) 50%, transparent); }
+  .card h3 { margin: 0 0 6px; font: 600 21px/1.2 var(--font-pixel); letter-spacing: 0.02em; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .c-lime { --c: var(--lime); } .c-blue { --c: var(--blue); } .c-purple { --c: var(--purple); } .c-pink { --c: #ff6fb5; } .c-orange { --c: #ffa94d; } .c-teal { --c: #3ee0c5; }
+
+  /* ---------- Versions ---------- */
+  .versions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+  .ver {
+    position: relative; padding: 22px 16px 18px; text-align: center;
+    background: var(--panel); border: 2px solid var(--line); border-radius: 14px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    transition: transform 200ms, border-color 200ms, box-shadow 200ms;
   }
-  footer p { margin: 0 auto; max-width: 62ch; }
+  .ver:hover { transform: translateY(-4px); border-color: var(--lime); box-shadow: 0 0 28px rgba(185, 230, 60, 0.2); }
+  .ver .cube { width: 34px; height: 34px; margin: 0 auto 12px; color: var(--lime); }
+  .ver .cube svg.i { width: 34px; height: 34px; }
+  .ver b { display: block; font: 700 28px/1 var(--font-pixel); letter-spacing: 0.03em; }
+  .ver small { display: block; margin-top: 8px; color: var(--muted); font-size: 13px; }
+  .ver .tag { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+  .ver.new { border-color: rgba(139, 123, 255, 0.6); }
+  .ver.new .tag { background: var(--purple); color: #fff; }
+  .ver.new .cube { color: var(--purple); }
+  .ver.main { border-color: rgba(77, 184, 255, 0.6); }
+  .ver.main .tag { background: var(--blue); color: #04121f; }
+  .ver.main .cube { color: var(--blue); }
+  .ver-note { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 26px auto 0; color: var(--muted); font-size: 14px; text-align: center; }
+  .ver-note svg.i { color: var(--blue); width: 18px; height: 18px; }
+
+  /* ---------- Steps ---------- */
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; counter-reset: step; }
+  .step { counter-increment: step; }
+  .step .ic { position: relative; }
+  .step .ic::after {
+    content: counter(step); position: absolute; top: -8px; right: -8px;
+    width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%;
+    background: var(--lime); color: #0b1400; font: 700 13px/1 var(--font-body);
+  }
+
+  /* ---------- Discord band ---------- */
+  .discord-band {
+    position: relative; overflow: hidden;
+    display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 28px;
+    padding: 40px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, rgba(88, 101, 242, 0.9), rgba(139, 123, 255, 0.75));
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 24px 60px rgba(88, 101, 242, 0.35);
+  }
+  .discord-band::before {
+    content: ""; position: absolute; right: -60px; top: -60px; width: 280px; height: 280px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z'/%3E%3C/svg%3E") center / contain no-repeat;
+    opacity: 0.12; transform: rotate(-12deg);
+    animation: float 6s ease-in-out infinite;
+  }
+  .discord-band h2 { font-size: clamp(28px, 4.5vw, 40px); }
+  .discord-band p { margin: 10px 0 0; color: rgba(255, 255, 255, 0.85); max-width: 46ch; }
+  .btn-discord {
+    position: relative; display: inline-flex; align-items: center; gap: 12px;
+    padding: 16px 28px; border-radius: 14px;
+    background: #fff; color: var(--discord); text-decoration: none;
+    font: 700 18px/1 var(--font-body);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    transition: transform 150ms, box-shadow 150ms;
+    white-space: nowrap;
+  }
+  .btn-discord svg { width: 26px; height: 26px; fill: currentColor; }
+  .btn-discord:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35); }
+  @media (max-width: 720px) { .discord-band { grid-template-columns: 1fr; padding: 28px 22px; text-align: center; } .discord-band p { margin-inline: auto; } .btn-discord { justify-self: center; } }
+
+  /* ---------- FAQ ---------- */
+  .faq { width: min(780px, 100%); margin-inline: auto; display: grid; gap: 10px; }
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: border-color 200ms; }
+  details[open] { border-color: rgba(77, 184, 255, 0.4); }
+  summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; font-weight: 700; font-size: 17px; }
+  summary::-webkit-details-marker { display: none; }
+  summary svg.i { color: var(--blue); transition: transform 250ms; }
+  details[open] summary svg.i { transform: rotate(45deg); }
+  details p { margin: 0; padding: 0 22px 20px; color: var(--muted); }
+
+  /* ---------- Footer ---------- */
+  footer { border-top: 1px solid var(--line); padding-block: 32px 40px; background: rgba(6, 9, 20, 0.6); }
+  footer .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; }
+  footer .brand { font-size: 17px; }
+  footer .brand img { width: 28px; height: 28px; }
+  .foot-links { display: flex; gap: 10px; }
+  .foot-links a { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); color: var(--muted); transition: color 150ms, background 150ms, transform 150ms; }
+  .foot-links a:hover { color: #fff; background: var(--discord); transform: translateY(-2px); }
+  .foot-links a.gh:hover { background: #333; }
+  .foot-links svg { width: 20px; height: 20px; fill: currentColor; }
+  .legal { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+
+  /* ---------- Scroll reveal ---------- */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 600ms ease, transform 600ms ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
   @media (prefers-reduced-motion: reduce) {
-    .logo { animation: none; }
-    .download { transition: none; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .reveal { opacity: 1; transform: none; }
+    html { scroll-behavior: auto; }
   }
 </style>
-
 </head>
 <body>
-<div class="backdrop" aria-hidden="true"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-discord" viewBox="0 0 24 24"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57v-2.23c-3.34.72-4.04-1.42-4.04-1.42-.55-1.4-1.34-1.77-1.34-1.77-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22v3.29c0 .32.22.7.82.58A12 12 0 0 0 12 .3"/></symbol>
+  </defs>
+</svg>
+
+<div class="bg" aria-hidden="true">
+  <div class="bg-img"></div>
+  <div class="bg-aurora"></div>
+  <div class="bg-veil"></div>
+  <div class="bg-grid"></div>
+  <div id="particles"></div>
+</div>
+
 <div class="page">
-  <main class="hero">
-    <img class="logo" src="assets/icon.png" alt="Dowy Client icon" width="148" height="148">
+  <nav>
+    <div class="wrap">
+      <a class="brand" href="#top"><img src="assets/icon.png" alt="" width="34" height="34">DOWY <span>CLIENT</span></a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#versions">Versions</a>
+        <a href="#install">Install</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <a class="nav-discord" href="https://discord.gg/SzPyTJncSM" target="_blank" rel="noopener"><svg><use href="#i-discord"/></svg>Discord</a>
+    </div>
+  </nav>
+
+  <header class="wrap hero" id="top">
+    <div class="logo-wrap"><img class="logo" src="assets/icon.png" alt="Dowy Client icon" width="180" height="180"></div>
+    <span class="badge"><span class="dot"></span>Version 0.6.1 is out</span>
     <h1>DOWY <span>CLIENT</span></h1>
-    <p class="tagline">A fast, free Minecraft launcher with 40+ built-in mods, 3D clothes and your own capes.</p>
-    <a class="download" id="download" href="https://github.com/DowyClient/dowyclient.github.io/releases/latest/download/DowyClient-Setup.exe">
-      <svg viewBox="0 0 11 11" aria-hidden="true" shape-rendering="crispEdges"><path fill="#fff" d="M4 0h3v5h2v1H8v1H7v1H6v1H5V8H4V7H3V6H2V5h2zM0 9h1v1h9V9h1v2H0z"/></svg>
-      Download
-    </a>
-    <p class="meta">Windows 10 &amp; 11 &middot; Version 0.6.1 &middot; Free</p>
-    <ul class="features">
-      <li><span class="block"></span><b>40+</b> mods in the Right&nbsp;Shift menu</li>
-      <li><span class="block"></span>Minecraft <b>1.21.6</b> to <b>26.3</b></li>
-      <li><span class="block"></span>Zoom, minimap, waypoints, keystrokes</li>
-      <li><span class="block"></span>Sodium FPS boost built in</li>
-      <li><span class="block"></span><b>3D clothes</b> only Dowy players see</li>
-      <li><span class="block"></span><b>Emotes</b> and hosting for <b>8</b> friends</li>
-    </ul>
-  </main>
+    <p class="tagline">A fast, free Minecraft launcher with 40+ built-in mods, 3D clothes, emotes and your own capes.</p>
+    <div class="cta">
+      <a class="download" id="download" href="https://github.com/DowyClient/dowyclient.github.io/releases/latest/download/DowyClient-Setup.exe">
+        <svg viewBox="0 0 11 11" aria-hidden="true" shape-rendering="crispEdges"><path fill="#fff" d="M4 0h3v5h2v1H8v1H7v1H6v1H5V8H4V7H3V6H2V5h2zM0 9h1v1h9V9h1v2H0z"/></svg>
+        Download
+      </a>
+      <a class="download discord" href="https://discord.gg/SzPyTJncSM" target="_blank" rel="noopener">
+        <svg aria-hidden="true"><use href="#i-discord"/></svg>
+        Join Discord
+      </a>
+    </div>
+    <p class="meta">
+      <span><svg class="i" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Windows 10 &amp; 11</span>
+      <span><svg class="i" viewBox="0 0 24 24"><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l8.59-8.59a1 1 0 0 0 0-1.41z"/><circle cx="7" cy="7" r="1.5"/></svg>Version 0.6.1</span>
+      <span><svg class="i" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>Free forever</span>
+    </p>
+    <div class="stats">
+      <div class="stat"><b>40+</b><small>Built-in mods</small></div>
+      <div class="stat"><b>7</b><small>Minecraft versions</small></div>
+      <div class="stat"><b>8</b><small>Friends per world</small></div>
+      <div class="stat"><b>Free</b><small>Always free</small></div>
+    </div>
+  </header>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Features</span>
+        <h2>Everything built in</h2>
+        <p>No mod hunting, no setup. Open the launcher, pick a version and play.</p>
+      </div>
+      <div class="grid">
+        <article class="card reveal c-lime">
+          <div class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></div>
+          <h3>40+ Mods</h3>
+          <p>Toggle every mod from one clean menu. Just press Right Shift in game.</p>
+        </article>
+        <article class="card reveal c-orange">
+          <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+          <h3>FPS Boost</h3>
+          <p>Sodium is built in, so you get smoother frames on any PC.</p>
+        </article>
+        <article class="card reveal c-blue">
+          <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg></div>
+          <h3>Minimap &amp; Waypoints</h3>
+          <p>Always know where you are and never lose your base again.</p>
+        </article>
+        <article class="card reveal c-teal">
+          <div class="ic"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/></svg></div>
+          <h3>Zoom &amp; Keystrokes</h3>
+          <p>Smooth zoom, keystrokes display and the HUD tools PvP players love.</p>
+        </article>
+        <article class="card reveal c-pink">
+          <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg></div>
+          <h3>3D Clothes</h3>
+          <p>Hats, jackets and more in full 3D. Every Dowy player can see them.</p>
+        </article>
+        <article class="card reveal c-purple">
+          <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></svg></div>
+          <h3>Your Own Capes</h3>
+          <p>Wear your own cape and show it off to other Dowy players.</p>
+        </article>
+        <article class="card reveal c-lime">
+          <div class="ic"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg></div>
+          <h3>Emotes</h3>
+          <p>Wave, dance and celebrate with emotes that other players see.</p>
+        </article>
+        <article class="card reveal c-blue">
+          <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3>Host for Friends</h3>
+          <p>Open your world to up to 8 friends. No server setup needed.</p>
+        </article>
+        <article class="card reveal c-teal">
+          <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></div>
+          <h3>Auto Updates</h3>
+          <p>The launcher updates itself. Just click Restart &amp; update.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="versions">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Version support</span>
+        <h2>Play the version you love</h2>
+        <p>Dowy Client runs on 7 Minecraft: Java Edition versions, all with the same mods and features.</p>
+      </div>
+      <div class="versions">
+        <div class="ver new reveal"><span class="tag">Newest</span><div class="cube"><svg class="i" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div><b>26.3</b><small>Latest release</small></div>
+        <div class="ver main reveal"><span class="tag">Popular</span><div class="cube"><svg class="i" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div><b>1.21.11</b><small>Full support</small></div>
+        <div class="ver reveal"><div class="cube"><svg class="i" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div><b>1.21.10</b><small>Full support</small></div>
+        <div class="ver reveal"><div class="cube"><svg class="i" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div><b>1.21.9</b><small>Full support</small></div>
+        <div class="ver reveal"><div class="cube"><svg class="i" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div><b>1.21.8</b><small>Full support</small></div>
+        <div class="ver reveal"><div class="cube"><svg class="i" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div><b>1.21.7</b><small>Full support</small></div>
+        <div class="ver reveal"><div class="cube"><svg class="i" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div><b>1.21.6</b><small>Full support</small></div>
+      </div>
+      <p class="ver-note reveal"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Pick your version right in the launcher. It downloads everything for you.</p>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Get started</span>
+        <h2>Playing in 3 steps</h2>
+      </div>
+      <div class="steps">
+        <article class="card step reveal c-lime">
+          <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></svg></div>
+          <h3>Download</h3>
+          <p>Get DowyClient-Setup.exe with the Download button above.</p>
+        </article>
+        <article class="card step reveal c-blue">
+          <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div>
+          <h3>Install</h3>
+          <p>Run the setup and open Dowy Client from your desktop.</p>
+        </article>
+        <article class="card step reveal c-purple">
+          <div class="ic"><svg class="i" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg></div>
+          <h3>Play</h3>
+          <p>Choose a version, hit Play and press Right Shift for the mod menu.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="discord">
+    <div class="wrap">
+      <div class="discord-band reveal">
+        <div>
+          <span class="eyebrow" style="color:#fff">Community</span>
+          <h2>Join the Dowy Discord</h2>
+          <p>Get help, share your capes and clothes, find friends to play with and hear about new updates first.</p>
+        </div>
+        <a class="btn-discord" href="https://discord.gg/SzPyTJncSM" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-discord"/></svg>Join server</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">FAQ</span>
+        <h2>Questions</h2>
+      </div>
+      <div class="faq">
+        <details class="reveal"><summary>Is Dowy Client free?<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary><p>Yes. Dowy Client is completely free to download and use.</p></details>
+        <details class="reveal"><summary>Do I need to own Minecraft?<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary><p>Yes. You need a Minecraft: Java Edition account to play.</p></details>
+        <details class="reveal"><summary>Which Minecraft versions work?<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary><p>1.21.6, 1.21.7, 1.21.8, 1.21.9, 1.21.10, 1.21.11 and 26.3. You choose the version inside the launcher.</p></details>
+        <details class="reveal"><summary>How do I update?<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary><p>You don't have to download again. The launcher finds new versions by itself and shows a Restart &amp; update button.</p></details>
+        <details class="reveal"><summary>Does it work on Mac or Linux?<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary><p>Right now Dowy Client is made for Windows 10 and 11.</p></details>
+        <details class="reveal"><summary>Where can I get help?<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary><p>Join our <a href="https://discord.gg/SzPyTJncSM" target="_blank" rel="noopener" style="color:var(--blue)">Discord server</a> and ask there.</p></details>
+      </div>
+    </div>
+  </section>
+
   <footer>
-    <p>Playing needs a Minecraft: Java Edition account. Dowy Client is not affiliated with Mojang Studios or Microsoft. Minecraft is a trademark of Mojang AB.</p>
+    <div class="wrap">
+      <a class="brand" href="#top"><img src="assets/icon.png" alt="" width="28" height="28">DOWY <span>CLIENT</span></a>
+      <div class="foot-links">
+        <a href="https://discord.gg/SzPyTJncSM" target="_blank" rel="noopener" aria-label="Discord"><svg><use href="#i-discord"/></svg></a>
+        <a class="gh" href="https://github.com/DowyClient/dowyclient.github.io/releases" target="_blank" rel="noopener" aria-label="GitHub releases"><svg><use href="#i-github"/></svg></a>
+      </div>
+      <p class="legal">Playing needs a Minecraft: Java Edition account. Dowy Client is not affiliated with Mojang Studios or Microsoft. Minecraft is a trademark of Mojang AB.</p>
+    </div>
   </footer>
 </div>
+
+<script>
+  // Drifting pixel particles
+  (function () {
+    var box = document.getElementById('particles');
+    if (!box || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    for (var i = 0; i < 26; i++) {
+      var p = document.createElement('span');
+      p.className = 'px';
+      p.style.left = (Math.random() * 100) + '%';
+      p.style.animationDuration = (12 + Math.random() * 16) + 's';
+      p.style.animationDelay = (-Math.random() * 20) + 's';
+      box.appendChild(p);
+    }
+  })();
+  // Reveal on scroll
+  (function () {
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) { els.forEach(function (e) { e.classList.add('in'); }); return; }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, { threshold: 0.12 });
+    els.forEach(function (e, i) { e.style.transitionDelay = (i % 4) * 70 + 'ms'; io.observe(e); });
+  })();
+  // Card spotlight follows the cursor
+  document.querySelectorAll('.card').forEach(function (c) {
+    c.addEventListener('pointermove', function (e) {
+      var r = c.getBoundingClientRect();
+      c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+  });
+</script>
 </body>
 </html>
