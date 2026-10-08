@@ -313,6 +313,22 @@
   .foot-links svg { width: 20px; height: 20px; fill: currentColor; }
   .legal { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
 
+  /* ---------- Updates ---------- */
+  .updates { display: grid; gap: 14px; width: min(860px, 100%); margin-inline: auto; }
+  .update { position: relative; padding: 20px 22px 18px 26px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: border-color 200ms ease, transform 200ms ease; }
+  .update::before { content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: 4px; border-radius: 4px; background: linear-gradient(180deg, var(--blue), var(--lime)); }
+  .update:hover { border-color: rgba(77, 184, 255, 0.4); transform: translateY(-2px); }
+  .update-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+  .update-head h3 { margin: 0; font: 700 22px/1 var(--font-pixel); }
+  .update-head time { color: var(--muted); font-size: 13px; }
+  .update-tag { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; background: var(--lime); color: #0b1400; }
+  .update p { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+  .update ul { margin: 8px 0 0; padding-left: 20px; color: var(--muted); font-size: 15px; }
+  .update li { margin: 3px 0; }
+  .updates-loading, .updates-more { text-align: center; color: var(--muted); }
+  .updates-more { margin-top: 18px; }
+  .updates-more a { color: var(--blue); font-weight: 600; }
+
   /* ---------- Scroll reveal ---------- */
   .reveal { opacity: 0; transform: translateY(24px); transition: opacity 600ms ease, transform 600ms ease; }
   .reveal.in { opacity: 1; transform: none; }
@@ -348,6 +364,7 @@
         <a href="#features">Features</a>
         <a href="#versions">Versions</a>
         <a href="#install">Install</a>
+        <a href="#updates">Updates</a>
         <a href="#faq">FAQ</a>
       </div>
       <a class="nav-discord" href="https://discord.gg/SzPyTJncSM" target="_blank" rel="noopener"><svg><use href="#i-discord"/></svg>Discord</a>
@@ -356,7 +373,7 @@
 
   <header class="wrap hero" id="top">
     <div class="logo-wrap"><img class="logo" src="assets/icon.png" alt="Dowy Client icon" width="180" height="180"></div>
-    <span class="badge"><span class="dot"></span>Version 0.7.5 is out</span>
+    <span class="badge"><span class="dot"></span>Version 0.7.6 is out</span>
     <h1>DOWY <span>CLIENT</span></h1>
     <p class="tagline">A fast, free Minecraft launcher with 40+ built-in mods, 3D clothes, emotes and your own capes.</p>
     <div class="cta">
@@ -371,7 +388,7 @@
     </div>
     <p class="meta">
       <span><svg class="i" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Windows 10 &amp; 11</span>
-      <span><svg class="i" viewBox="0 0 24 24"><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l8.59-8.59a1 1 0 0 0 0-1.41z"/><circle cx="7" cy="7" r="1.5"/></svg>Version 0.7.5</span>
+      <span><svg class="i" viewBox="0 0 24 24"><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l8.59-8.59a1 1 0 0 0 0-1.41z"/><circle cx="7" cy="7" r="1.5"/></svg>Version 0.7.6</span>
       <span><svg class="i" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>Free forever</span>
     </p>
     <div class="stats">
@@ -498,6 +515,20 @@
     </div>
   </section>
 
+  <section id="updates">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Updates</span>
+        <h2>What's new</h2>
+        <p>Every Dowy Client update. Already installed? The launcher updates itself - just press Update &amp; restart.</p>
+      </div>
+      <div class="updates" id="updates-list">
+        <p class="updates-loading">Loading updates…</p>
+      </div>
+      <p class="updates-more reveal"><a href="https://github.com/DowyClient/dowyclient.github.io/releases" target="_blank" rel="noopener">See every release on GitHub</a></p>
+    </div>
+  </section>
+
   <section id="faq">
     <div class="wrap">
       <div class="sec-head reveal">
@@ -541,6 +572,37 @@
       box.appendChild(p);
     }
   })();
+  // Updates: the latest releases from GitHub, with their notes.
+  (function () {
+    var box = document.getElementById('updates-list');
+    if (!box) return;
+    var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+    var notes = function (body) {
+      var lines = String(body || '').split(/\r?\n/).map(function (l) { return l.trim(); })
+        .filter(function (l) { return l && !/download DowyClient-Setup|updates itself/i.test(l); });
+      var html = '', list = [];
+      var flush = function () { if (list.length) { html += '<ul>' + list.join('') + '</ul>'; list = []; } };
+      lines.forEach(function (l) {
+        if (/^[-*] /.test(l)) list.push('<li>' + esc(l.slice(2)) + '</li>');
+        else { flush(); html += '<p>' + esc(l) + '</p>'; }
+      });
+      flush();
+      return html || '<p>Fixes and improvements.</p>';
+    };
+    fetch('https://api.github.com/repos/DowyClient/dowyclient.github.io/releases?per_page=8')
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (releases) {
+        box.innerHTML = releases.filter(function (r) { return !r.draft; }).map(function (r, i) {
+          var date = new Date(r.published_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+          return '<article class="update reveal in"><div class="update-head"><h3>' + esc(r.name || r.tag_name) + '</h3>'
+            + (i === 0 ? '<span class="update-tag">Latest</span>' : '') + '<time>' + esc(date) + '</time></div>' + notes(r.body) + '</article>';
+        }).join('');
+      })
+      .catch(function () {
+        box.innerHTML = '<p class="updates-loading">Couldn\'t load the updates right now - <a href="https://github.com/DowyClient/dowyclient.github.io/releases" style="color:var(--blue)">see them on GitHub</a>.</p>';
+      });
+  })();
+
   // Reveal on scroll
   (function () {
     var els = document.querySelectorAll('.reveal');
