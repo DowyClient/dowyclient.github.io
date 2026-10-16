@@ -340,6 +340,45 @@
   .reveal { opacity: 0; transform: translateY(24px); transition: opacity 600ms ease, transform 600ms ease; }
   .reveal.in { opacity: 1; transform: none; }
 
+  /* ---------- Big hero buttons: icon tile + title + small line ---------- */
+  .bigbtn {
+    --c1: #4db8ff; --c2: #2f7fd0; --glow: rgba(77, 184, 255, 0.45);
+    position: relative; overflow: hidden; isolation: isolate;
+    display: inline-flex; align-items: center; gap: 14px;
+    min-width: min(290px, 100%); padding: 12px 22px 12px 12px;
+    border-radius: 16px; text-decoration: none; color: #fff;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 0 0 var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    transition: transform 220ms cubic-bezier(.2, .9, .3, 1.4), box-shadow 220ms ease, filter 220ms ease;
+  }
+  .bigbtn.dc { --c1: #6f7bff; --c2: #4752c4; --glow: rgba(88, 101, 242, 0.55); }
+  /* light sweeping across, and a soft pulse around the main button */
+  .bigbtn::after {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.35) 50%, transparent 65%) 0 0 / 250% 100% no-repeat;
+    animation: bb-sweep 4s ease-in-out infinite;
+  }
+  @keyframes bb-sweep { 0% { background-position: 130% 0; } 55%, 100% { background-position: -30% 0; } }
+  .bigbtn.dl { animation: bb-pulse 2.6s ease-in-out infinite; }
+  @keyframes bb-pulse { 50% { box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 0 8px rgba(77, 184, 255, 0), 0 0 34px var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.35); } }
+  .bigbtn:hover { transform: translateY(-4px) scale(1.02); filter: brightness(1.08); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), 0 0 40px var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
+  .bigbtn:active { transform: translateY(0) scale(0.98); }
+  .bigbtn:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+  .bb-ic { width: 50px; height: 50px; flex: none; display: grid; place-items: center; border-radius: 12px; background: rgba(255, 255, 255, 0.18); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35); transition: transform 300ms cubic-bezier(.2, .9, .3, 1.4); }
+  .bb-ic svg { width: 26px; height: 26px; fill: currentColor; }
+  .bigbtn:hover .bb-ic { transform: rotate(-8deg) scale(1.1); }
+  .bigbtn.dl:hover .bb-ic svg { animation: bb-drop 700ms ease infinite; }
+  @keyframes bb-drop { 50% { transform: translateY(3px); } }
+  .bb-text { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 3px; }
+  .bb-text b { font: 700 24px/1 var(--font-pixel); letter-spacing: 0.04em; text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3); }
+  .bb-text small { font-size: 12.5px; color: rgba(255, 255, 255, 0.85); font-weight: 600; }
+  /* winter: snow piled on top of both buttons */
+  .winter .bigbtn { padding-top: 16px; }
+  .winter .bigbtn::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 12px; background: var(--snowcap) 0 0 / 60px 13px repeat-x; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2)); }
+  .winter .bigbtn.dl { --c1: #7fd3ff; --c2: #3a8fd8; }
+  @media (max-width: 600px) { .bigbtn { width: 100%; } }
+
   /* ---------- Nav: the section you're reading lights up ---------- */
   .nav-links a { position: relative; }
   .nav-links a.active { color: var(--text); background: rgba(255, 255, 255, 0.07); }
@@ -367,7 +406,7 @@
   .winter body { background: var(--bg); }
 
   /* Background: the title picture turned cold, northern lights, falling snow */
-  .winter .bg-img { filter: saturate(0.55) brightness(0.62) contrast(1.05); }
+  .winter .bg-img { background-image: url("assets/winter-forest.webp"); background-position: center 40%; filter: saturate(0.9) brightness(0.72) contrast(1.05); }
   .winter .bg-img::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(110, 180, 255, 0.4), rgba(20, 50, 110, 0.45)); mix-blend-mode: color; }
   .winter .bg-aurora, .winter #particles { display: none; }
   .winter .aurora { display: block; position: absolute; inset: -6% -20% auto; height: 72%; filter: blur(38px); mix-blend-mode: screen; opacity: 0.95; }
@@ -539,22 +578,22 @@
       <img class="logo" src="assets/icon.png" alt="Dowy Client icon" width="180" height="180">
       <span class="logo-shine" aria-hidden="true"></span>
     </div>
-    <span class="badge"><span class="dot"></span>Version 0.8.7 is out</span>
+    <span class="badge"><span class="dot"></span>Version 0.8.8 is out</span>
     <h1>DOWY <span>CLIENT</span></h1>
     <p class="tagline">A fast, free Minecraft launcher with 40+ built-in mods, 3D clothes, emotes and your own capes.</p>
     <div class="cta">
-      <a class="download" id="download" href="https://github.com/DowyClient/dowyclient.github.io/releases/latest/download/DowyClient-Setup.exe">
-        <svg viewBox="0 0 11 11" aria-hidden="true" shape-rendering="crispEdges"><path fill="#fff" d="M4 0h3v5h2v1H8v1H7v1H6v1H5V8H4V7H3V6H2V5h2zM0 9h1v1h9V9h1v2H0z"/></svg>
-        Download
+      <a class="bigbtn dl" id="download" href="https://github.com/DowyClient/dowyclient.github.io/releases/latest/download/DowyClient-Setup.exe">
+        <span class="bb-ic"><svg viewBox="0 0 11 11" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M4 0h3v5h2v1H8v1H7v1H6v1H5V8H4V7H3V6H2V5h2zM0 9h1v1h9V9h1v2H0z"/></svg></span>
+        <span class="bb-text"><b>Download</b><small>Windows 10 &amp; 11 · Version 0.8.8 · Free</small></span>
       </a>
-      <a class="download discord" href="https://discord.gg/SzPyTJncSM" target="_blank" rel="noopener">
-        <svg aria-hidden="true"><use href="#i-discord"/></svg>
-        Join Discord
+      <a class="bigbtn dc" href="https://discord.gg/SzPyTJncSM" target="_blank" rel="noopener">
+        <span class="bb-ic"><svg aria-hidden="true"><use href="#i-discord"/></svg></span>
+        <span class="bb-text"><b>Join Discord</b><small id="dc-count">Help, friends &amp; giveaways</small></span>
       </a>
     </div>
     <p class="meta">
       <span><svg class="i" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Windows 10 &amp; 11</span>
-      <span><svg class="i" viewBox="0 0 24 24"><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l8.59-8.59a1 1 0 0 0 0-1.41z"/><circle cx="7" cy="7" r="1.5"/></svg>Version 0.8.7</span>
+      <span><svg class="i" viewBox="0 0 24 24"><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l8.59-8.59a1 1 0 0 0 0-1.41z"/><circle cx="7" cy="7" r="1.5"/></svg>Version 0.8.8</span>
       <span><svg class="i" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>Free forever</span>
     </p>
     <div class="event" id="event">
@@ -804,6 +843,19 @@
       });
     }, { rootMargin: '-45% 0px -50% 0px' });
     Object.keys(links).forEach(function (id) { var s = document.getElementById(id); if (s) io.observe(s); });
+  })();
+
+  // Discord button: how many members / online (Discord's public invite info).
+  (function () {
+    var el = document.getElementById('dc-count');
+    if (!el || !window.fetch) return;
+    fetch('https://discord.com/api/v10/invites/SzPyTJncSM?with_counts=true')
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (d) {
+        var f = new Intl.NumberFormat();
+        if (d.approximate_member_count) el.textContent = f.format(d.approximate_member_count) + ' members · ' + f.format(d.approximate_presence_count || 0) + ' online';
+      })
+      .catch(function () { /* keep the plain line */ });
   })();
 
   // ---------- Winter event ----------
