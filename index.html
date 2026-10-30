@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Quake Client - a fast, free Minecraft launcher with 40+ built-in mods, 3D clothes, emotes and capes. Supports Minecraft 1.21.6 to 1.21.11 and 26.3.">
-<meta name="theme-color" content="#070708">
+<meta name="theme-color" content="#0c0a10">
 <meta property="og:title" content="Quake Client">
 <meta property="og:description" content="A fast, free Minecraft launcher with 40+ built-in mods.">
 <meta property="og:image" content="assets/icon.png">
@@ -13,27 +13,22 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Figtree:wght@400;500;600;700&display=swap">
-<script>
-  // Winter event: from now until January 1, 2027 (the page goes back to normal by itself after that).
-  window.WINTER_END = new Date(2027, 0, 1).getTime();
-  if (Date.now() < window.WINTER_END) document.documentElement.classList.add('winter');
-</script>
 <style>
   :root {
-    --bg: #070708;
-    --panel: rgba(20, 20, 24, 0.72);
-    --panel-hi: rgba(30, 30, 36, 0.86);
-    --line: rgba(255, 255, 255, 0.09);
-    --text: #f4f4f5;
-    --muted: #a0a0a8;
-    --blue: #3d9bff;
-    --lime: #e9f3ff;
-    --purple: #6fa8ff;
-    --discord: #5865f2;
-    --stone: #7d7d7d;
-    --stone-hi: #a5a5a5;
-    --stone-lo: #545454;
-    --edge: #0a0a0a;
+    /* Halloween palette */
+    --bg: #0c0a10;
+    --surface: #151119;
+    --surface-hi: #1e1720;
+    --ember: #ff7a1a;
+    --ember-light: #ffb255;
+    --ember-deep: #c9480a;
+    --ember-soft: #ffd7ad;
+    --text: #f6f0ea;
+    --muted: #a99fa6;
+    --ember-rgb: 255, 122, 26;
+    --bg-rgb: 12, 10, 16;
+    --shade: rgba(0, 0, 0, 0.65);
+    --line: rgba(var(--ember-rgb), 0.16);
     --font-pixel: "Pixelify Sans", "Courier New", monospace;
     --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
     color-scheme: dark;
@@ -50,70 +45,56 @@
   a { color: inherit; }
   svg.i { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-  /* ---------- Background: slow-zooming title picture, aurora glow, pixel grid, drifting particles ---------- */
-  .bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-  .bg-img {
-    position: absolute; inset: -4%;
-    background: url("assets/background-sunset.jpg") center 30% / cover no-repeat;
-    filter: saturate(1.1) brightness(0.95);
-    animation: kenburns 40s ease-in-out infinite alternate;
-  }
-  @keyframes kenburns { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.12) translate(-1.5%, -1%); } }
-  .bg-aurora {
-    position: absolute; inset: -20%;
+  /* ---------- Hero picture, mist and embers (behind all content) ---------- */
+  .hero-shell { position: relative; }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: -2; overflow: hidden;
     background:
-      radial-gradient(40% 35% at 20% 25%, rgba(77, 184, 255, 0.28), transparent 70%),
-      radial-gradient(35% 30% at 80% 20%, rgba(90, 150, 255, 0.24), transparent 70%),
-      radial-gradient(40% 35% at 60% 85%, rgba(220, 236, 255, 0.14), transparent 70%);
-    animation: aurora 18s ease-in-out infinite alternate;
-    mix-blend-mode: screen;
+      linear-gradient(180deg, rgba(var(--bg-rgb), 0.62), rgba(var(--bg-rgb), 0.42) 30%, rgba(var(--bg-rgb), 0.66) 68%, var(--bg)),
+      radial-gradient(ellipse 72% 68% at 50% 42%, transparent 30%, rgba(var(--bg-rgb), 0.88)),
+      url("assets/halloween.jpg") center 38% / cover no-repeat;
   }
-  @keyframes aurora { to { transform: translate(4%, 3%) rotate(6deg); } }
-  .bg-veil {
-    position: absolute; inset: 0;
-    background:
-      radial-gradient(55% 45% at 50% 40%, rgba(8, 8, 10, 0.45), transparent 75%),
-      linear-gradient(180deg, rgba(8, 8, 10, 0.15), rgba(8, 8, 10, 0.45) 40%, rgba(8, 8, 10, 0.9) 85%);
+  /* Phones: the hero is tall, so show the picture at the top only and fade it out, instead of zooming in too far. */
+  @media (max-width: 600px) {
+    .hero-bg {
+      background:
+        linear-gradient(180deg, rgba(var(--bg-rgb), 0.62) 0, rgba(var(--bg-rgb), 0.45) 240px, rgba(var(--bg-rgb), 0.7) 520px, var(--bg) 780px),
+        url("assets/halloween.jpg") 46% 0 / auto 780px no-repeat;
+    }
   }
-  .bg-grid {
-    position: absolute; inset: 0;
+  /* Two tiles wide, so moving it by one tile loops without a jump. */
+  .mist {
+    position: absolute; left: 0; bottom: 6%; width: 200%; height: 56%;
     background-image:
-      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-    background-size: 32px 32px;
-    mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent);
+      radial-gradient(34% 40% at 25% 62%, rgba(214, 200, 205, 0.16), transparent 70%),
+      radial-gradient(30% 34% at 72% 38%, rgba(214, 200, 205, 0.11), transparent 70%);
+    background-size: 50% 100%;
+    will-change: transform;
+    animation: mist 80s linear infinite;
   }
-  .px { position: absolute; bottom: -20px; width: 8px; height: 8px; background: var(--blue); opacity: 0; box-shadow: 0 0 12px currentColor; animation: rise linear infinite; }
-  .px:nth-child(3n) { background: var(--lime); color: var(--lime); }
-  .px:nth-child(3n+1) { color: var(--blue); }
-  .px:nth-child(3n+2) { background: var(--purple); color: var(--purple); width: 6px; height: 6px; }
-  @keyframes rise {
-    0% { transform: translateY(0) rotate(0); opacity: 0; }
-    10% { opacity: 0.8; }
-    90% { opacity: 0.6; }
-    100% { transform: translateY(-110vh) rotate(180deg); opacity: 0; }
-  }
+  @keyframes mist { to { transform: translateX(-50%); } }
+  #embers { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; height: 100lvh; z-index: -1; pointer-events: none; }
 
-  .page { position: relative; z-index: 1; }
   .wrap { width: min(1120px, 100%); margin-inline: auto; padding-inline: 16px; }
 
   /* ---------- Nav ---------- */
   nav {
     position: sticky; top: 0; z-index: 10;
-    backdrop-filter: blur(14px) saturate(1.4);
-    -webkit-backdrop-filter: blur(14px) saturate(1.4);
-    background: rgba(8, 8, 10, 0.55);
+    background: var(--bg);
     border-bottom: 1px solid var(--line);
   }
   nav .wrap { display: flex; align-items: center; gap: 20px; height: 64px; }
   .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font: 700 20px/1 var(--font-pixel); letter-spacing: 0.05em; }
-  .brand img { width: 34px; height: 34px; image-rendering: auto; filter: drop-shadow(0 0 10px rgba(77, 184, 255, 0.5)); }
-  .brand span { color: var(--blue); }
+  .brand img { width: 34px; height: 34px; image-rendering: auto; filter: drop-shadow(0 0 10px rgba(var(--ember-rgb), 0.5)); }
+  .brand span { color: var(--ember); }
   .nav-links { display: flex; gap: 4px; margin-left: auto; }
-  .nav-links a { padding: 8px 12px; border-radius: 8px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: 15px; transition: color 150ms, background 150ms; }
-  .nav-links a:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
-  .nav-discord { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; background: var(--discord); color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; transition: transform 150ms, box-shadow 150ms; }
-  .nav-discord:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(88, 101, 242, 0.5); }
+  .nav-links a { position: relative; padding: 8px 12px; border-radius: 8px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: 15px; transition: color 150ms, background 150ms; }
+  .nav-links a:hover { color: var(--text); background: rgba(var(--ember-rgb), 0.08); }
+  .nav-links a.active { color: var(--text); background: rgba(var(--ember-rgb), 0.1); }
+  .nav-links a::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 3px; height: 2px; border-radius: 2px; background: var(--ember); transform: scaleX(0); transition: transform 250ms ease; }
+  .nav-links a.active::after, .nav-links a:hover::after { transform: scaleX(1); }
+  .nav-discord { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; background: var(--surface); border: 1px solid rgba(var(--ember-rgb), 0.5); color: var(--ember-soft); text-decoration: none; font-weight: 700; font-size: 14px; transition: transform 150ms, background 150ms, border-color 150ms; }
+  .nav-discord:hover { transform: translateY(-1px); background: var(--surface-hi); border-color: var(--ember); }
   .nav-discord svg { width: 18px; height: 18px; fill: currentColor; }
   @media (max-width: 720px) { .nav-links { display: none; } .nav-discord { margin-left: auto; } }
 
@@ -121,139 +102,161 @@
   .hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 18px; padding-block: 72px 56px; }
   .logo-wrap { position: relative; width: clamp(130px, 26vw, 180px); aspect-ratio: 1; display: grid; place-items: center; animation: float 5s ease-in-out infinite; }
   .logo-wrap::before {
-    content: ""; position: absolute; inset: -14%; border-radius: 50%;
-    background: conic-gradient(from 0deg, var(--blue), var(--purple), var(--lime), var(--blue));
-    filter: blur(28px); opacity: 0.55;
-    animation: spin 8s linear infinite;
+    content: ""; position: absolute; inset: -26%; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(var(--ember-rgb), 0.55), transparent);
+    animation: glow 4s ease-in-out infinite;
   }
   .logo-wrap::after {
     content: ""; position: absolute; inset: -6%; border-radius: 50%;
-    border: 2px dashed rgba(255, 255, 255, 0.18);
+    border: 2px dashed rgba(255, 215, 173, 0.3);
     animation: spin 30s linear infinite reverse;
   }
   .logo { position: relative; width: 100%; height: auto; filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.6)); transition: transform 300ms cubic-bezier(.2,.9,.3,1.4); }
   .logo-wrap:hover .logo { transform: scale(1.08) rotate(-4deg); }
   @keyframes float { 50% { transform: translateY(-10px); } }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: rgba(220, 236, 255, 0.12); border: 1px solid rgba(220, 236, 255, 0.35); color: var(--lime); font-size: 13px; font-weight: 700; letter-spacing: 0.03em; }
-  .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 0 rgba(220, 236, 255, 0.7); animation: ping 2s infinite; }
-  @keyframes ping { 70% { box-shadow: 0 0 0 8px rgba(220, 236, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 236, 255, 0); } }
+  @keyframes glow { 50% { opacity: 0.6; } }
+  .badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: rgba(21, 17, 25, 0.8); border: 1px solid rgba(var(--ember-rgb), 0.45); color: var(--ember-soft); font-size: 13px; font-weight: 700; letter-spacing: 0.03em; }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 0 0 rgba(var(--ember-rgb), 0.7); animation: ping 2s infinite; }
+  @keyframes ping { 70% { box-shadow: 0 0 0 8px rgba(var(--ember-rgb), 0); } 100% { box-shadow: 0 0 0 0 rgba(var(--ember-rgb), 0); } }
   h1 {
     margin: 0;
     font: 700 clamp(46px, 10vw, 88px)/1 var(--font-pixel);
     letter-spacing: 0.05em;
-    text-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
+    text-shadow: 5px 5px 0 var(--shade), 0 0 36px rgba(var(--ember-rgb), 0.4);
   }
-  h1 span {
-    background: linear-gradient(90deg, var(--blue), var(--purple), var(--blue));
-    background-size: 200% 100%;
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    animation: shine 6s linear infinite;
-    filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, 0.55));
-    text-shadow: none;
-  }
-  @keyframes shine { to { background-position: -200% 0; } }
-  .tagline { margin: 0; max-width: 40ch; color: var(--muted); font-size: 18px; text-wrap: balance; }
-  .cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 8px; }
-
-  /* Minecraft-style stone button */
-  .download {
-    position: relative; overflow: hidden;
-    display: inline-flex; align-items: center; justify-content: center; gap: 12px;
-    padding: 14px 34px 16px; min-width: min(280px, 100%);
-    border: 3px solid var(--edge);
-    background: var(--stone);
-    box-shadow: inset 3px 3px 0 var(--stone-hi), inset -3px -4px 0 var(--stone-lo), 0 10px 26px rgba(0, 0, 0, 0.45);
-    color: #fff; font: 600 24px/1 var(--font-pixel); letter-spacing: 0.04em; text-decoration: none;
-    text-shadow: 3px 3px 0 #3a3a3a;
-    transition: transform 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
-  }
-  .download::after {
-    content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%;
-    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-    transform: skewX(-20deg);
-    animation: sweep 3.5s ease-in-out infinite;
-  }
-  @keyframes sweep { 0%, 60% { left: -60%; } 100% { left: 130%; } }
-  .download:hover { background: #6e8fd6; box-shadow: inset 3px 3px 0 #9fb8f0, inset -3px -4px 0 #4a63a0, 0 0 0 3px #fff, 0 12px 34px rgba(77, 184, 255, 0.45); transform: translateY(-2px); }
-  .download:active { transform: translateY(1px); }
-  .download:focus-visible, .btn-discord:focus-visible { outline: 3px solid var(--lime); outline-offset: 4px; }
-  .download svg { width: 22px; height: 22px; flex: none; }
-  .download.discord { background: var(--discord); box-shadow: inset 3px 3px 0 #8790f7, inset -3px -4px 0 #3c45b5, 0 10px 26px rgba(0, 0, 0, 0.45); text-shadow: 3px 3px 0 #2f379a; }
-  .download.discord:hover { background: #6b77f5; box-shadow: inset 3px 3px 0 #9ca3fa, inset -3px -4px 0 #4650c2, 0 0 0 3px #fff, 0 12px 34px rgba(88, 101, 242, 0.55); }
-  .download.discord svg { fill: #fff; }
-  .meta { margin: 0; color: var(--muted); font-size: 13px; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; }
+  h1 span { color: var(--ember); }
+  .tagline { margin: 0; max-width: 40ch; color: var(--text); font-size: 18px; text-wrap: balance; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85); }
+  .cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 8px; width: 100%; }
+  .meta { margin: 0; color: var(--ember-soft); font-size: 13px; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85); }
   .meta span { display: inline-flex; align-items: center; gap: 6px; }
-  .meta svg.i { width: 15px; height: 15px; color: var(--blue); }
+  .meta svg.i { width: 15px; height: 15px; color: var(--ember-light); }
+
+  /* Big hero buttons: icon tile + title + small line */
+  .bigbtn {
+    position: relative; isolation: isolate;
+    display: inline-flex; align-items: center; gap: 14px;
+    min-width: min(290px, 100%); padding: 12px 22px 12px 12px;
+    border-radius: 16px; text-decoration: none;
+    transition: transform 220ms cubic-bezier(.2, .9, .3, 1.4), filter 220ms ease, box-shadow 220ms ease;
+  }
+  .bigbtn.dl {
+    color: var(--bg); background: var(--ember); border: 1px solid var(--ember-light);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), inset 0 2px 0 var(--ember-light), inset 0 -3px 0 var(--ember-deep);
+  }
+  /* A soft pulse around the main button (opacity only, so it stays cheap) */
+  .bigbtn.dl::after {
+    content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
+    box-shadow: 0 0 36px rgba(var(--ember-rgb), 0.75);
+    opacity: 0; animation: bb-glow 2.6s ease-in-out infinite;
+  }
+  @keyframes bb-glow { 50% { opacity: 1; } }
+  .bigbtn.dc {
+    color: var(--ember-soft); background: var(--surface); border: 1px solid rgba(var(--ember-rgb), 0.55);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 215, 173, 0.12);
+  }
+  .bigbtn:hover { transform: translateY(-4px) scale(1.02); filter: brightness(1.08); }
+  .bigbtn.dc:hover { border-color: var(--ember); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 26px rgba(var(--ember-rgb), 0.3); }
+  .bigbtn:active { transform: translateY(0) scale(0.98); }
+  .bigbtn:focus-visible, .btn-discord:focus-visible, .nav-discord:focus-visible { outline: 3px solid var(--ember-soft); outline-offset: 4px; }
+  .bb-ic { width: 50px; height: 50px; flex: none; display: grid; place-items: center; border-radius: 12px; transition: transform 300ms cubic-bezier(.2, .9, .3, 1.4); }
+  .bigbtn.dl .bb-ic { background: rgba(var(--bg-rgb), 0.16); }
+  .bigbtn.dc .bb-ic { background: rgba(var(--ember-rgb), 0.14); color: var(--ember-light); }
+  .bb-ic svg { width: 26px; height: 26px; fill: currentColor; }
+  .bigbtn:hover .bb-ic { transform: rotate(-8deg) scale(1.1); }
+  .bigbtn.dl:hover .bb-ic svg { animation: bb-drop 700ms ease infinite; }
+  @keyframes bb-drop { 50% { transform: translateY(3px); } }
+  .bb-text { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 3px; }
+  .bb-text b { font: 700 24px/1 var(--font-pixel); letter-spacing: 0.04em; }
+  .bb-text small { font-size: 12.5px; font-weight: 600; }
+  .bigbtn.dc .bb-text small { color: var(--muted); }
+  @media (max-width: 600px) { .bigbtn { width: 100%; } }
+
+  /* Halloween event: badge and countdown (hidden after the event ends) */
+  .event {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px 20px;
+    width: min(760px, 100%); margin-top: 10px; padding: 14px 18px;
+    border-radius: 18px; background: rgba(21, 17, 25, 0.88);
+    border: 1px solid rgba(var(--ember-rgb), 0.45);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+  }
+  .event[hidden] { display: none; }
+  .event-text { flex: 1 1 220px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .event-badge { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px; background: var(--ember); color: var(--bg); font: 700 18px/1.1 var(--font-pixel); letter-spacing: 0.03em; }
+  .event-badge svg { width: 16px; height: 16px; flex: none; fill: currentColor; }
+  .event-end { color: var(--ember-soft); font-size: 14px; }
+  .countdown { display: flex; gap: 8px; }
+  .countdown div { min-width: 64px; padding: 8px 6px 6px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); text-align: center; }
+  .countdown b { display: block; font: 700 24px/1 var(--font-pixel); font-variant-numeric: tabular-nums; color: var(--ember-light); }
+  .countdown small { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  @media (max-width: 600px) { .event-text { align-items: center; text-align: center; } }
 
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: min(760px, 100%); margin-top: 30px; }
-  .stat { padding: 16px 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-  .stat b { display: block; font: 700 30px/1.1 var(--font-pixel); color: var(--lime); }
-  .stat:nth-child(even) b { color: var(--blue); }
+  .stat { padding: 16px 10px; background: rgba(21, 17, 25, 0.88); border: 1px solid var(--line); border-radius: 14px; }
+  .stat b { display: block; font: 700 30px/1.1 var(--font-pixel); color: var(--ember-light); }
+  .stat:nth-child(even) b { color: var(--ember-soft); }
   .stat small { color: var(--muted); font-size: 13px; }
   @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr); } }
 
   /* ---------- Sections ---------- */
   section { padding-block: 72px; }
   .sec-head { text-align: center; margin-bottom: 40px; }
-  .eyebrow { display: inline-block; font: 600 14px/1 var(--font-pixel); letter-spacing: 0.15em; text-transform: uppercase; color: var(--lime); margin-bottom: 10px; }
-  h2 { margin: 0; font: 700 clamp(30px, 5vw, 44px)/1.1 var(--font-pixel); letter-spacing: 0.03em; text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); }
+  .eyebrow { display: inline-block; font: 600 14px/1 var(--font-pixel); letter-spacing: 0.15em; text-transform: uppercase; color: var(--ember-light); margin-bottom: 10px; }
+  h2 { margin: 0; font: 700 clamp(30px, 5vw, 44px)/1.1 var(--font-pixel); letter-spacing: 0.03em; text-shadow: 3px 3px 0 var(--shade), 0 0 24px rgba(var(--ember-rgb), 0.3); }
   .sec-head p { margin: 12px auto 0; color: var(--muted); max-width: 52ch; }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
   .card {
     position: relative;
     padding: 24px;
-    background: var(--panel);
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 16px;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     transition: transform 200ms ease, border-color 200ms ease, background 200ms ease, box-shadow 200ms ease;
     overflow: hidden;
   }
   .card::before {
     content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(77, 184, 255, 0.16), transparent 60%);
+    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(var(--ember-rgb), 0.14), transparent 60%);
     opacity: 0; transition: opacity 200ms;
   }
-  .card:hover { transform: translateY(-4px); border-color: rgba(77, 184, 255, 0.45); background: var(--panel-hi); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(77, 184, 255, 0.15); }
+  .card:hover { transform: translateY(-4px); border-color: rgba(var(--ember-rgb), 0.5); background: var(--surface-hi); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(var(--ember-rgb), 0.15); }
   .card:hover::before { opacity: 1; }
   .ic {
     width: 52px; height: 52px; display: grid; place-items: center; border-radius: 12px; margin-bottom: 16px;
-    color: var(--c, var(--blue));
-    background: color-mix(in srgb, var(--c, var(--blue)) 14%, transparent);
-    border: 1px solid color-mix(in srgb, var(--c, var(--blue)) 40%, transparent);
-    box-shadow: 0 0 24px color-mix(in srgb, var(--c, var(--blue)) 25%, transparent);
+    color: var(--c, var(--ember));
+    background: color-mix(in srgb, var(--c, var(--ember)) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c, var(--ember)) 40%, transparent);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--c, var(--ember)) 20%, transparent);
     transition: transform 300ms cubic-bezier(.2,.9,.3,1.4), box-shadow 200ms;
   }
   .ic svg.i { width: 26px; height: 26px; }
-  .card:hover .ic { transform: scale(1.12) rotate(-6deg); box-shadow: 0 0 34px color-mix(in srgb, var(--c, var(--blue)) 50%, transparent); }
+  .card:hover .ic { transform: scale(1.12) rotate(-6deg); box-shadow: 0 0 34px color-mix(in srgb, var(--c, var(--ember)) 45%, transparent); }
   .card h3 { margin: 0 0 6px; font: 600 21px/1.2 var(--font-pixel); letter-spacing: 0.02em; }
   .card p { margin: 0; color: var(--muted); font-size: 15px; }
-  .c-lime { --c: var(--lime); } .c-blue { --c: var(--blue); } .c-purple { --c: var(--purple); } .c-pink { --c: #ff6fb5; } .c-orange { --c: #ffa94d; } .c-teal { --c: #3ee0c5; }
+  .c-soft { --c: var(--ember-soft); } .c-light { --c: var(--ember-light); } .c-ember { --c: var(--ember); }
 
   /* ---------- Versions ---------- */
   .versions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
   .ver {
     position: relative; padding: 22px 16px 18px; text-align: center;
-    background: var(--panel); border: 2px solid var(--line); border-radius: 14px;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    background: var(--surface); border: 2px solid var(--line); border-radius: 14px;
     transition: transform 200ms, border-color 200ms, box-shadow 200ms;
   }
-  .ver:hover { transform: translateY(-4px); border-color: var(--lime); box-shadow: 0 0 28px rgba(220, 236, 255, 0.2); }
-  .ver .cube { width: 34px; height: 34px; margin: 0 auto 12px; color: var(--lime); }
+  .ver:hover { transform: translateY(-4px); border-color: var(--ember-light); box-shadow: 0 0 28px rgba(var(--ember-rgb), 0.22); }
+  .ver .cube { width: 34px; height: 34px; margin: 0 auto 12px; color: var(--ember-soft); }
   .ver .cube svg.i { width: 34px; height: 34px; }
   .ver b { display: block; font: 700 28px/1 var(--font-pixel); letter-spacing: 0.03em; }
   .ver small { display: block; margin-top: 8px; color: var(--muted); font-size: 13px; }
   .ver .tag { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
-  .ver.new { border-color: rgba(90, 150, 255, 0.6); }
-  .ver.new .tag { background: var(--purple); color: #fff; }
-  .ver.new .cube { color: var(--purple); }
-  .ver.main { border-color: rgba(77, 184, 255, 0.6); }
-  .ver.main .tag { background: var(--blue); color: #04121f; }
-  .ver.main .cube { color: var(--blue); }
+  .ver.new { border-color: rgba(var(--ember-rgb), 0.65); }
+  .ver.new .tag { background: var(--ember-deep); color: var(--text); }
+  .ver.new .cube { color: var(--ember); }
+  .ver.main { border-color: rgba(255, 178, 85, 0.6); }
+  .ver.main .tag { background: var(--ember-light); color: var(--bg); }
+  .ver.main .cube { color: var(--ember-light); }
   .ver-note { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 26px auto 0; color: var(--muted); font-size: 14px; text-align: center; }
-  .ver-note svg.i { color: var(--blue); width: 18px; height: 18px; }
+  .ver-note svg.i { color: var(--ember-light); width: 18px; height: 18px; }
 
   /* ---------- Steps ---------- */
   .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; counter-reset: step; }
@@ -262,7 +265,7 @@
   .step .ic::after {
     content: counter(step); position: absolute; top: -8px; right: -8px;
     width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%;
-    background: var(--lime); color: #05070c; font: 700 13px/1 var(--font-body);
+    background: var(--ember); color: var(--bg); font: 700 13px/1 var(--font-body);
   }
 
   /* ---------- Discord band ---------- */
@@ -271,62 +274,63 @@
     display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 28px;
     padding: 40px;
     border-radius: 22px;
-    background: linear-gradient(135deg, rgba(88, 101, 242, 0.9), rgba(90, 150, 255, 0.75));
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 24px 60px rgba(88, 101, 242, 0.35);
+    background: linear-gradient(135deg, rgba(201, 72, 10, 0.3), var(--surface) 75%), var(--surface);
+    border: 1px solid rgba(var(--ember-rgb), 0.4);
+    box-shadow: 0 24px 60px rgba(var(--ember-rgb), 0.14);
   }
   .discord-band::before {
     content: ""; position: absolute; right: -60px; top: -60px; width: 280px; height: 280px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z'/%3E%3C/svg%3E") center / contain no-repeat;
-    opacity: 0.12; transform: rotate(-12deg);
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a1a'%3E%3Cpath d='M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z'/%3E%3C/svg%3E") center / contain no-repeat;
+    opacity: 0.1; transform: rotate(-12deg);
     animation: float 6s ease-in-out infinite;
   }
   .discord-band h2 { font-size: clamp(28px, 4.5vw, 40px); }
-  .discord-band p { margin: 10px 0 0; color: rgba(255, 255, 255, 0.85); max-width: 46ch; }
+  .discord-band p { margin: 10px 0 0; color: var(--ember-soft); max-width: 46ch; }
   .btn-discord {
     position: relative; display: inline-flex; align-items: center; gap: 12px;
     padding: 16px 28px; border-radius: 14px;
-    background: #fff; color: var(--discord); text-decoration: none;
+    background: var(--bg); color: var(--ember-soft); text-decoration: none;
+    border: 1px solid rgba(var(--ember-rgb), 0.55);
     font: 700 18px/1 var(--font-body);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-    transition: transform 150ms, box-shadow 150ms;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    transition: transform 150ms, border-color 150ms, box-shadow 150ms;
     white-space: nowrap;
   }
   .btn-discord svg { width: 26px; height: 26px; fill: currentColor; }
-  .btn-discord:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35); }
+  .btn-discord:hover { transform: translateY(-3px) scale(1.03); border-color: var(--ember); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), 0 0 26px rgba(var(--ember-rgb), 0.3); }
   @media (max-width: 720px) { .discord-band { grid-template-columns: 1fr; padding: 28px 22px; text-align: center; } .discord-band p { margin-inline: auto; } .btn-discord { justify-self: center; } }
 
   /* ---------- FAQ ---------- */
   .faq { width: min(780px, 100%); margin-inline: auto; display: grid; gap: 10px; }
-  details { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: border-color 200ms; }
-  details[open] { border-color: rgba(77, 184, 255, 0.4); }
+  details { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; transition: border-color 200ms; }
+  details[open] { border-color: rgba(var(--ember-rgb), 0.45); }
   summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; font-weight: 700; font-size: 17px; }
   summary::-webkit-details-marker { display: none; }
-  summary svg.i { color: var(--blue); transition: transform 250ms; }
+  summary svg.i { color: var(--ember-light); transition: transform 250ms; }
   details[open] summary svg.i { transform: rotate(45deg); }
   details p { margin: 0; padding: 0 22px 20px; color: var(--muted); }
 
   /* ---------- Footer ---------- */
-  footer { border-top: 1px solid var(--line); padding-block: 32px 40px; background: rgba(8, 8, 10, 0.6); }
+  footer { border-top: 1px solid var(--line); padding-block: 32px 40px; background: var(--surface); }
   footer .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; }
   footer .brand { font-size: 17px; }
   footer .brand img { width: 28px; height: 28px; }
   .foot-links { display: flex; gap: 10px; }
-  .foot-links a { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); color: var(--muted); transition: color 150ms, background 150ms, transform 150ms; }
-  .foot-links a:hover { color: #fff; background: var(--discord); transform: translateY(-2px); }
+  .foot-links a { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: rgba(var(--ember-rgb), 0.08); color: var(--muted); transition: color 150ms, background 150ms, transform 150ms; }
+  .foot-links a:hover { color: var(--bg); background: var(--ember); transform: translateY(-2px); }
   .foot-links a.gh:hover { background: #333; }
   .foot-links svg { width: 20px; height: 20px; fill: currentColor; }
   .legal { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
 
   /* ---------- Updates ---------- */
   .updates { display: grid; gap: 14px; width: min(860px, 100%); margin-inline: auto; }
-  .update { position: relative; padding: 20px 22px 18px 26px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: border-color 200ms ease, transform 200ms ease; }
-  .update::before { content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: 4px; border-radius: 4px; background: linear-gradient(180deg, var(--blue), var(--lime)); }
-  .update:hover { border-color: rgba(77, 184, 255, 0.4); transform: translateY(-2px); }
+  .update { position: relative; padding: 20px 22px 18px 26px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; transition: border-color 200ms ease, transform 200ms ease; }
+  .update::before { content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: 4px; border-radius: 4px; background: linear-gradient(180deg, var(--ember-light), var(--ember-deep)); }
+  .update:hover { border-color: rgba(var(--ember-rgb), 0.45); transform: translateY(-2px); }
   .update-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
   .update-head h3 { margin: 0; font: 700 22px/1 var(--font-pixel); }
   .update-head time { color: var(--muted); font-size: 13px; }
-  .update-tag { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; background: var(--lime); color: #05070c; }
+  .update-tag { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; background: var(--ember-light); color: var(--bg); }
   .update p { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
   .update ul { margin: 8px 0 0; padding-left: 20px; color: var(--muted); font-size: 15px; }
   .update li { margin: 3px 0; }
@@ -334,204 +338,15 @@
   .update b { color: var(--text); }
   .updates-loading, .updates-more { text-align: center; color: var(--muted); }
   .updates-more { margin-top: 18px; }
-  .updates-more a { color: var(--blue); font-weight: 600; }
+  .updates-more a { color: var(--ember-light); font-weight: 600; }
 
   /* ---------- Scroll reveal ---------- */
   .reveal { opacity: 0; transform: translateY(24px); transition: opacity 600ms ease, transform 600ms ease; }
   .reveal.in { opacity: 1; transform: none; }
 
-  /* ---------- Big hero buttons: icon tile + title + small line ---------- */
-  .bigbtn {
-    --c1: #4db8ff; --c2: #2f7fd0; --glow: rgba(77, 184, 255, 0.45);
-    position: relative; overflow: hidden; isolation: isolate;
-    display: inline-flex; align-items: center; gap: 14px;
-    min-width: min(290px, 100%); padding: 12px 22px 12px 12px;
-    border-radius: 16px; text-decoration: none; color: #fff;
-    background: linear-gradient(135deg, var(--c1), var(--c2));
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 0 0 var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-    transition: transform 220ms cubic-bezier(.2, .9, .3, 1.4), box-shadow 220ms ease, filter 220ms ease;
-  }
-  .bigbtn.dc { --c1: #6f7bff; --c2: #4752c4; --glow: rgba(88, 101, 242, 0.55); }
-  /* light sweeping across, and a soft pulse around the main button */
-  .bigbtn::after {
-    content: ""; position: absolute; inset: 0; z-index: -1;
-    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.35) 50%, transparent 65%) 0 0 / 250% 100% no-repeat;
-    animation: bb-sweep 4s ease-in-out infinite;
-  }
-  @keyframes bb-sweep { 0% { background-position: 130% 0; } 55%, 100% { background-position: -30% 0; } }
-  .bigbtn.dl { animation: bb-pulse 2.6s ease-in-out infinite; }
-  @keyframes bb-pulse { 50% { box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 0 8px rgba(77, 184, 255, 0), 0 0 34px var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.35); } }
-  .bigbtn:hover { transform: translateY(-4px) scale(1.02); filter: brightness(1.08); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), 0 0 40px var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
-  .bigbtn:active { transform: translateY(0) scale(0.98); }
-  .bigbtn:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
-  .bb-ic { width: 50px; height: 50px; flex: none; display: grid; place-items: center; border-radius: 12px; background: rgba(255, 255, 255, 0.18); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35); transition: transform 300ms cubic-bezier(.2, .9, .3, 1.4); }
-  .bb-ic svg { width: 26px; height: 26px; fill: currentColor; }
-  .bigbtn:hover .bb-ic { transform: rotate(-8deg) scale(1.1); }
-  .bigbtn.dl:hover .bb-ic svg { animation: bb-drop 700ms ease infinite; }
-  @keyframes bb-drop { 50% { transform: translateY(3px); } }
-  .bb-text { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 3px; }
-  .bb-text b { font: 700 24px/1 var(--font-pixel); letter-spacing: 0.04em; text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3); }
-  .bb-text small { font-size: 12.5px; color: rgba(255, 255, 255, 0.85); font-weight: 600; }
-  /* winter: snow piled on top of both buttons */
-  .winter .bigbtn { padding-top: 16px; }
-  .winter .bigbtn::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 12px; background: var(--snowcap) 0 0 / 60px 13px repeat-x; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2)); }
-  .winter .bigbtn.dl { --c1: #7fd3ff; --c2: #3a8fd8; }
-  @media (max-width: 600px) { .bigbtn { width: 100%; } }
-
-  /* ---------- Nav: the section you're reading lights up ---------- */
-  .nav-links a { position: relative; }
-  .nav-links a.active { color: var(--text); background: rgba(255, 255, 255, 0.07); }
-  .nav-links a::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 3px; height: 2px; border-radius: 2px; background: var(--blue); transform: scaleX(0); transition: transform 250ms ease; }
-  .nav-links a.active::after, .nav-links a:hover::after { transform: scaleX(1); }
-
-  /* =====================================================================
-     WINTER EVENT (html.winter, until January 1, 2027)
-     Ice colours, northern lights, snow, snow caps, icicles, frosty icon.
-     ===================================================================== */
-  .snow-only, .aurora, #snow, .event { display: none; }
-  .winter .snow-only { display: revert; }
-  .winter {
-    --bg: #070708;
-    --blue: #7fd3ff;
-    --lime: #bdf0ff;
-    --purple: #a7b4ff;
-    --ice: #9fe0ff;
-    --frost: #eef9ff;
-    --panel: rgba(20, 20, 24, 0.62);
-    --panel-hi: rgba(30, 30, 36, 0.82);
-    --line: rgba(190, 228, 255, 0.14);
-    --snowcap: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 13'%3E%3Cpath fill='%23bfe0ff' transform='translate(0 1.6)' d='M60 5c-4 0-6 4-10 4s-6-3-10-3-4 5-10 5-6-4-10-4-4 3-10 3-6-5-10-5V0h60z'/%3E%3Cpath fill='%23f4fbff' d='M60 5c-4 0-6 4-10 4s-6-3-10-3-4 5-10 5-6-4-10-4-4 3-10 3-6-5-10-5V0h60z'/%3E%3C/svg%3E");
-  }
-  .winter body { background: var(--bg); }
-
-  /* Background: the title picture turned cold, northern lights, falling snow */
-  .winter .bg-img { background-image: url("assets/winter-forest.gif"); background-position: center 40%; filter: grayscale(0.85) brightness(0.72) contrast(1.06); }
-  .winter .bg-img::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(110, 180, 255, 0.4), rgba(20, 50, 110, 0.45)); mix-blend-mode: color; }
-  .winter .bg-aurora, .winter #particles { display: none; }
-  .winter .aurora { display: block; position: absolute; inset: -6% -20% auto; height: 72%; filter: blur(38px); mix-blend-mode: screen; opacity: 0.95; }
-  .aurora i { position: absolute; left: -10%; right: -10%; height: 34%; border-radius: 50%; animation: ribbon 16s ease-in-out infinite alternate; }
-  .aurora i:nth-child(1) { top: 6%; background: linear-gradient(90deg, transparent 5%, rgba(110, 185, 255, 0.55), rgba(95, 184, 255, 0.5), transparent 95%); }
-  .aurora i:nth-child(2) { top: 22%; background: linear-gradient(90deg, transparent 10%, rgba(95, 184, 255, 0.45), rgba(150, 190, 255, 0.45), transparent 90%); animation-duration: 21s; animation-delay: -7s; }
-  .aurora i:nth-child(3) { top: 36%; background: linear-gradient(90deg, transparent 15%, rgba(110, 185, 255, 0.35), transparent 85%); animation-duration: 26s; animation-delay: -12s; }
-  @keyframes ribbon {
-    0% { transform: translateX(-7%) rotate(-9deg) scaleY(0.75); }
-    50% { transform: translateX(3%) rotate(-3deg) scaleY(1.2); }
-    100% { transform: translateX(8%) rotate(-11deg) scaleY(0.9); }
-  }
-  .winter .bg-veil { background: radial-gradient(55% 45% at 50% 40%, rgba(6, 6, 8, 0.35), transparent 75%), linear-gradient(180deg, rgba(6, 6, 8, 0.1), rgba(6, 6, 8, 0.45) 40%, rgba(6, 6, 8, 0.92) 85%); }
-  .winter #snow { display: block; position: fixed; inset: 0; z-index: 5; pointer-events: none; }
-  html.snow-off #snow { display: none; }
-
-  /* Nav: icicles hanging under it, snow switch */
-  .winter nav { background: rgba(10, 10, 12, 0.6); border-bottom-color: rgba(190, 228, 255, 0.22); }
-  .winter nav::after {
-    content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 16px; pointer-events: none;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16'%3E%3Cg fill='%23dff4ff' fill-opacity='.75'%3E%3Cpath d='M4 0h6l-3 11z'/%3E%3Cpath d='M18 0h4l-2 6z'/%3E%3Cpath d='M30 0h8l-4 15z'/%3E%3Cpath d='M48 0h4l-2 7z'/%3E%3Cpath d='M60 0h6l-3 10z'/%3E%3Cpath d='M78 0h5l-2.5 13z'/%3E%3Cpath d='M92 0h4l-2 6z'/%3E%3Cpath d='M104 0h7l-3.5 12z'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 120px 16px repeat-x;
-    filter: drop-shadow(0 2px 3px rgba(127, 211, 255, 0.35));
-  }
-  .winter .brand img { filter: drop-shadow(0 0 10px rgba(159, 224, 255, 0.75)); animation: brand-frost 4s ease-in-out infinite; }
-  @keyframes brand-frost { 50% { filter: drop-shadow(0 0 16px rgba(220, 245, 255, 0.95)); } }
-  .snow-toggle {
-    display: none; place-items: center; width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.05); color: var(--ice); cursor: pointer; transition: background 150ms, transform 150ms;
-  }
-  .winter .snow-toggle { display: grid; }
-  .snow-toggle:hover { background: rgba(159, 224, 255, 0.14); transform: rotate(30deg); }
-  .snow-toggle svg { width: 20px; height: 20px; }
-  html.snow-off .snow-toggle { color: var(--muted); opacity: 0.6; }
-
-  /* Hero icon: frost ring, orbiting snowflakes, an ice shine across the icon */
-  .winter .logo-wrap::before { background: conic-gradient(from 0deg, #7fd3ff, #ffffff, #7fc0ff, #a7b4ff, #7fd3ff); opacity: 0.6; }
-  .winter .logo-wrap::after { border: 2px dotted rgba(220, 245, 255, 0.45); }
-  .orbit { display: none; position: absolute; inset: -22%; animation: spin 16s linear infinite; pointer-events: none; }
-  .winter .orbit { display: block; }
-  .orbit svg { position: absolute; width: 18px; height: 18px; color: #e9f8ff; filter: drop-shadow(0 0 6px rgba(159, 224, 255, 0.9)); animation: spin 6s linear infinite reverse; }
-  .orbit svg:nth-child(1) { left: 50%; top: 0; }
-  .orbit svg:nth-child(2) { right: 4%; top: 58%; width: 13px; height: 13px; }
-  .orbit svg:nth-child(3) { left: 6%; top: 64%; width: 15px; height: 15px; }
-  .orbit svg:nth-child(4) { left: 18%; top: 8%; width: 11px; height: 11px; }
-  .logo-shine {
-    display: none; position: absolute; inset: 0;
-    background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.85) 48%, rgba(190, 235, 255, 0.5) 52%, transparent 65%) 0 0 / 300% 100% no-repeat;
-    -webkit-mask: url("assets/icon.png") center / contain no-repeat; mask: url("assets/icon.png") center / contain no-repeat;
-    mix-blend-mode: overlay; animation: ice-shine 4.5s ease-in-out infinite; pointer-events: none;
-  }
-  .winter .logo-shine { display: block; }
-  @keyframes ice-shine { 0% { background-position: 130% 0; } 55%, 100% { background-position: -40% 0; } }
-  .winter .logo { cursor: pointer; filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 18px rgba(159, 224, 255, 0.45)); }
-  .winter .logo-wrap:hover .logo { transform: scale(1.1) rotate(-6deg); filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 28px rgba(220, 245, 255, 0.85)) brightness(1.08); }
-  .winter .logo-wrap.pop .logo { animation: logo-pop 500ms cubic-bezier(.2, .9, .3, 1.4); }
-  @keyframes logo-pop { 40% { transform: scale(0.88) rotate(4deg); } }
-
-  /* Title and badge in ice */
-  .winter h1 span { background-image: linear-gradient(90deg, #9fe0ff, #ffffff, #7fd3ff, #d6e8ff, #9fe0ff); }
-  .winter h1 { text-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55), 0 0 30px rgba(127, 211, 255, 0.35); }
-  .winter .badge { background: rgba(159, 224, 255, 0.12); border-color: rgba(159, 224, 255, 0.4); color: var(--ice); }
-  .winter .badge .dot { background: var(--ice); }
-
-  /* Winter event banner with the countdown */
-  .winter .event {
-    display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: center;
-    width: min(760px, 100%); margin-top: 10px; padding: 16px 20px;
-    border-radius: 18px; position: relative; overflow: hidden;
-    background: linear-gradient(135deg, rgba(40, 90, 170, 0.55), rgba(90, 70, 190, 0.45));
-    border: 1px solid rgba(200, 235, 255, 0.3);
-    box-shadow: 0 18px 50px rgba(30, 80, 170, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  }
-  .event::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 12px; background: var(--snowcap) 0 0 / 60px 13px repeat-x; }
-  .event-ic { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; background: rgba(255, 255, 255, 0.12); color: #fff; flex: none; }
-  .event-ic svg { width: 28px; height: 28px; animation: spin 10s linear infinite; }
-  .event-text { text-align: left; flex: 1 1 220px; }
-  .event-text b { display: block; font: 700 22px/1.1 var(--font-pixel); letter-spacing: 0.03em; }
-  .event-text span { color: rgba(230, 244, 255, 0.85); font-size: 14px; }
-  .countdown { display: flex; gap: 8px; }
-  .countdown div { min-width: 58px; padding: 8px 6px 6px; border-radius: 12px; background: rgba(6, 6, 8, 0.45); border: 1px solid rgba(200, 235, 255, 0.2); text-align: center; }
-  .countdown b { display: block; font: 700 24px/1 var(--font-pixel); font-variant-numeric: tabular-nums; color: #fff; }
-  .countdown small { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-  @media (max-width: 600px) { .event-text { text-align: center; } }
-
-  /* Ice-block buttons with a layer of snow on top (like Minecraft snow) */
-  .winter .download { background: linear-gradient(#f4fbff 0 7px, #d6efff 7px 9px, #66b2e6 9px); box-shadow: inset 3px 3px 0 #b9e3ff, inset -3px -4px 0 #3c78aa, 0 10px 26px rgba(0, 0, 0, 0.45), 0 0 26px rgba(127, 211, 255, 0.25); text-shadow: 3px 3px 0 #1f4f78; }
-  .winter .download:hover { background: linear-gradient(#ffffff 0 7px, #e2f4ff 7px 9px, #7cc2f0 9px); box-shadow: inset 3px 3px 0 #d6f0ff, inset -3px -4px 0 #4a8cc0, 0 0 0 3px #fff, 0 12px 34px rgba(127, 211, 255, 0.55); }
-  .winter .download.discord { background: linear-gradient(#f4fbff 0 7px, #d6dcff 7px 9px, var(--discord) 9px); }
-  .winter .download.discord:hover { background: linear-gradient(#ffffff 0 7px, #e2e6ff 7px 9px, #6b77f5 9px); }
-
-  /* Snow caps on cards, stats, versions, updates, questions */
-  .winter .card::after, .winter .stat::after, .winter .ver::after, .winter .update::after, .winter details::after, .winter .discord-band::after {
-    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 12px; pointer-events: none;
-    background: var(--snowcap) 0 0 / 60px 13px repeat-x; opacity: 0.92;
-    border-radius: inherit; border-bottom-left-radius: 0; border-bottom-right-radius: 0;
-  }
-  .winter .stat, .winter details, .winter .ver { position: relative; overflow: hidden; }
-  .winter .ver { overflow: visible; }
-  .winter .ver::after { border-radius: 12px 12px 0 0; }
-  .winter .card:hover { border-color: rgba(190, 235, 255, 0.55); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(127, 211, 255, 0.2); }
-  .winter .card::before { background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(200, 238, 255, 0.18), transparent 60%); }
-  .winter .stat b { color: #e6f7ff; text-shadow: 0 0 18px rgba(127, 211, 255, 0.6); }
-  .winter .stat:nth-child(even) b { color: var(--ice); }
-  .winter .ver:hover { border-color: var(--ice); box-shadow: 0 0 28px rgba(127, 211, 255, 0.3); }
-  .winter .update::before { background: linear-gradient(180deg, #ffffff, var(--ice), #7fc0ff); }
-  .winter .update-tag, .winter .step .ic::after { background: var(--ice); color: #04233a; }
-  .winter .eyebrow { color: var(--ice); }
-  .winter .eyebrow::before {
-    content: ""; display: inline-block; width: 13px; height: 13px; margin-right: 8px; vertical-align: -1px; background: currentColor;
-    -webkit-mask: var(--flake) center / contain no-repeat; mask: var(--flake) center / contain no-repeat;
-  }
-  .winter { --flake: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 2v20M4.9 4.9l14.2 14.2M2 12h20M4.9 19.1 19.1 4.9M9 3l3 3 3-3M9 21l3-3 3 3M3 9l3 3-3 3M21 9l-3 3 3 3'/%3E%3C/svg%3E"); }
-  .winter .discord-band { background: linear-gradient(135deg, rgba(88, 101, 242, 0.85), rgba(80, 150, 240, 0.7)); }
-
-  /* Snow piled along the top of the footer */
-  .winter footer { position: relative; }
-  .winter footer::before {
-    content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 34px; pointer-events: none;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 34' preserveAspectRatio='none'%3E%3Cpath fill='%23eaf6ff' fill-opacity='.9' d='M0 34V20c30-14 60-16 90-6s55 4 80-6 60-8 90 4 50 10 80 0 45-12 60-6v28z'/%3E%3Cpath fill='%23c7e4ff' fill-opacity='.6' d='M0 34v-6c40-10 80-8 120 0s70 4 110-4 90-6 170 4v6z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
-    .winter #snow { display: none; }
+    #embers { display: none; }
     .reveal { opacity: 1; transform: none; }
     html { scroll-behavior: auto; }
   }
@@ -541,22 +356,12 @@
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <symbol id="i-discord" viewBox="0 0 24 24"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></symbol>
-    <symbol id="i-flake" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M4.9 4.9l14.2 14.2M2 12h20M4.9 19.1 19.1 4.9M9 3l3 3 3-3M9 21l3-3 3 3M3 9l3 3-3 3M21 9l-3 3 3 3"/></g></symbol>
     <symbol id="i-github" viewBox="0 0 24 24"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57v-2.23c-3.34.72-4.04-1.42-4.04-1.42-.55-1.4-1.34-1.77-1.34-1.77-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22v3.29c0 .32.22.7.82.58A12 12 0 0 0 12 .3"/></symbol>
   </defs>
 </svg>
 
-<div class="bg" aria-hidden="true">
-  <div class="bg-img"></div>
-  <div class="bg-aurora"></div>
-  <div class="bg-veil"></div>
-  <div class="aurora"><i></i><i></i><i></i></div>
-  <div class="bg-grid"></div>
-  <div id="particles"></div>
-</div>
-<canvas id="snow" aria-hidden="true"></canvas>
+<canvas id="embers" aria-hidden="true"></canvas>
 
-<div class="page">
   <nav>
     <div class="wrap">
       <a class="brand" href="#top"><img src="assets/icon.png" alt="" width="34" height="34">QUAKE <span>CLIENT</span></a>
@@ -567,24 +372,23 @@
         <a href="#updates">Updates</a>
         <a href="#faq">FAQ</a>
       </div>
-      <button class="snow-toggle" id="snow-toggle" type="button" aria-pressed="true" title="Snow on/off"><svg aria-hidden="true"><use href="#i-flake"/></svg></button>
       <a class="nav-discord" href="https://discord.gg/SzPyTJncSM" target="_blank" rel="noopener"><svg><use href="#i-discord"/></svg>Discord</a>
     </div>
   </nav>
 
+  <div class="hero-shell">
+  <div class="hero-bg" aria-hidden="true"><div class="mist"></div></div>
   <header class="wrap hero" id="top">
     <div class="logo-wrap" id="logo-wrap">
-      <div class="orbit" aria-hidden="true"><svg><use href="#i-flake"/></svg><svg><use href="#i-flake"/></svg><svg><use href="#i-flake"/></svg><svg><use href="#i-flake"/></svg></div>
       <img class="logo" src="assets/icon.png" alt="Quake Client icon" width="180" height="180">
-      <span class="logo-shine" aria-hidden="true"></span>
     </div>
-    <span class="badge"><span class="dot"></span>Version 0.9.7 is out</span>
+    <span class="badge"><span class="dot"></span>Version 1.0.0 is out</span>
     <h1>QUAKE <span>CLIENT</span></h1>
     <p class="tagline">A fast, free Minecraft launcher with 40+ built-in mods, 3D clothes, emotes and your own capes.</p>
     <div class="cta">
       <a class="bigbtn dl" id="download" href="https://github.com/DowyClient/dowyclient.github.io/releases/latest/download/QuakeClient-Installer.exe">
         <span class="bb-ic"><svg viewBox="0 0 11 11" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M4 0h3v5h2v1H8v1H7v1H6v1H5V8H4V7H3V6H2V5h2zM0 9h1v1h9V9h1v2H0z"/></svg></span>
-        <span class="bb-text"><b>Download</b><small>Windows 10 &amp; 11 · Version 0.9.7 · Free</small></span>
+        <span class="bb-text"><b>Download</b><small>Windows 10 &amp; 11 · Version 1.0.0 · Free</small></span>
       </a>
       <a class="bigbtn dc" href="https://discord.gg/SzPyTJncSM" target="_blank" rel="noopener">
         <span class="bb-ic"><svg aria-hidden="true"><use href="#i-discord"/></svg></span>
@@ -593,17 +397,18 @@
     </div>
     <p class="meta">
       <span><svg class="i" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Windows 10 &amp; 11</span>
-      <span><svg class="i" viewBox="0 0 24 24"><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l8.59-8.59a1 1 0 0 0 0-1.41z"/><circle cx="7" cy="7" r="1.5"/></svg>Version 0.9.7</span>
+      <span><svg class="i" viewBox="0 0 24 24"><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l8.59-8.59a1 1 0 0 0 0-1.41z"/><circle cx="7" cy="7" r="1.5"/></svg>Version 1.0.0</span>
       <span><svg class="i" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>Free forever</span>
     </p>
-    <div class="event" id="event">
-      <div class="event-ic"><svg aria-hidden="true"><use href="#i-flake"/></svg></div>
-      <div class="event-text"><b>Winter Event</b><span>Snow, frost and northern lights - live until January 1, 2027.</span></div>
-      <div class="countdown" aria-label="Time left in the winter event">
+    <div class="event" id="event" hidden>
+      <div class="event-text">
+        <span class="event-badge"><svg viewBox="0 0 11 11" aria-hidden="true" shape-rendering="crispEdges"><path fill-rule="evenodd" d="M5 0h2v2H5zM2 2h7v1h1v1h1v5h-1v1H9v1H2v-1H1V9H0V4h1V3h1zM3 5v1h1V5zM7 5v1h1V5zM3 8v1h5V8z"/></svg>Halloween Event</span>
+        <span class="event-end">Ends on January 1, 2027</span>
+      </div>
+      <div class="countdown" role="timer" aria-label="Time left in the Halloween event">
         <div><b id="cd-d">0</b><small>days</small></div>
         <div><b id="cd-h">00</b><small>hours</small></div>
         <div><b id="cd-m">00</b><small>min</small></div>
-        <div><b id="cd-s">00</b><small>sec</small></div>
       </div>
     </div>
     <div class="stats">
@@ -613,6 +418,7 @@
       <div class="stat"><b>Free</b><small>Always free</small></div>
     </div>
   </header>
+  </div>
 
   <section id="features">
     <div class="wrap">
@@ -622,47 +428,47 @@
         <p>No mod hunting, no setup. Open the launcher, pick a version and play.</p>
       </div>
       <div class="grid">
-        <article class="card reveal c-lime">
+        <article class="card reveal c-soft">
           <div class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></div>
           <h3>40+ Mods</h3>
           <p>Toggle every mod from one clean menu. Just press Right Shift in game.</p>
         </article>
-        <article class="card reveal c-orange">
+        <article class="card reveal c-ember">
           <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
           <h3>FPS Boost</h3>
           <p>Sodium is built in, so you get smoother frames on any PC.</p>
         </article>
-        <article class="card reveal c-blue">
+        <article class="card reveal c-light">
           <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg></div>
           <h3>Minimap &amp; Waypoints</h3>
           <p>Always know where you are and never lose your base again.</p>
         </article>
-        <article class="card reveal c-teal">
+        <article class="card reveal c-ember">
           <div class="ic"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/></svg></div>
           <h3>Zoom &amp; Keystrokes</h3>
           <p>Smooth zoom, keystrokes display and the HUD tools PvP players love.</p>
         </article>
-        <article class="card reveal c-pink">
+        <article class="card reveal c-soft">
           <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg></div>
           <h3>3D Clothes</h3>
           <p>Hats, jackets and more in full 3D. Every Quake player can see them.</p>
         </article>
-        <article class="card reveal c-purple">
+        <article class="card reveal c-ember">
           <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></svg></div>
           <h3>Your Own Capes</h3>
           <p>Wear your own cape and show it off to other Quake players.</p>
         </article>
-        <article class="card reveal c-lime">
+        <article class="card reveal c-soft">
           <div class="ic"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg></div>
           <h3>Emotes</h3>
           <p>Wave, dance and celebrate with emotes that other players see.</p>
         </article>
-        <article class="card reveal c-blue">
+        <article class="card reveal c-light">
           <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
           <h3>Host for Friends</h3>
           <p>Open your world to up to 8 friends. No server setup needed.</p>
         </article>
-        <article class="card reveal c-teal">
+        <article class="card reveal c-ember">
           <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></div>
           <h3>Auto Updates</h3>
           <p>The launcher updates itself. Just click Restart &amp; update.</p>
@@ -698,17 +504,17 @@
         <h2>Playing in 3 steps</h2>
       </div>
       <div class="steps">
-        <article class="card step reveal c-lime">
+        <article class="card step reveal c-soft">
           <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></svg></div>
           <h3>Download</h3>
           <p>Get QuakeClient-Installer.exe with the Download button above.</p>
         </article>
-        <article class="card step reveal c-blue">
+        <article class="card step reveal c-light">
           <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div>
           <h3>Install</h3>
           <p>Run QuakeClient-Installer.exe and press Install. If Windows shows &ldquo;Windows protected your PC&rdquo;, click More info, then Run anyway.</p>
         </article>
-        <article class="card step reveal c-purple">
+        <article class="card step reveal c-ember">
           <div class="ic"><svg class="i" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg></div>
           <h3>Play</h3>
           <p>Choose a version, hit Play and press Right Shift for the mod menu.</p>
@@ -721,7 +527,7 @@
     <div class="wrap">
       <div class="discord-band reveal">
         <div>
-          <span class="eyebrow" style="color:#fff">Community</span>
+          <span class="eyebrow">Community</span>
           <h2>Join the Quake Discord</h2>
           <p>Get help, share your capes and clothes, find friends to play with and hear about new updates first.</p>
         </div>
@@ -756,7 +562,7 @@
         <details class="reveal"><summary>Which Minecraft versions work?<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary><p>1.21.6, 1.21.7, 1.21.8, 1.21.9, 1.21.10, 1.21.11 and 26.3. You choose the version inside the launcher.</p></details>
         <details class="reveal"><summary>How do I update?<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary><p>You don't have to download again. The launcher finds new versions by itself and shows a Restart &amp; update button.</p></details>
         <details class="reveal"><summary>Does it work on Mac or Linux?<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary><p>Right now Quake Client is made for Windows 10 and 11.</p></details>
-        <details class="reveal"><summary>Where can I get help?<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary><p>Join our <a href="https://discord.gg/SzPyTJncSM" target="_blank" rel="noopener" style="color:var(--blue)">Discord server</a> and ask there.</p></details>
+        <details class="reveal"><summary>Where can I get help?<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary><p>Join our <a href="https://discord.gg/SzPyTJncSM" target="_blank" rel="noopener" style="color:var(--ember-light)">Discord server</a> and ask there.</p></details>
       </div>
     </div>
   </section>
@@ -770,21 +576,76 @@
       <p class="legal">Playing needs a Minecraft: Java Edition account. Quake Client is not affiliated with Mojang Studios or Microsoft. Minecraft is a trademark of Mojang AB.</p>
     </div>
   </footer>
-</div>
 
 <script>
-  // Drifting pixel particles
+  // Embers: slow orange pixels rising up the screen, drawn on one canvas.
+  // Stops when the tab is hidden, and never runs with prefers-reduced-motion.
   (function () {
-    var box = document.getElementById('particles');
-    if (!box || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    for (var i = 0; i < 26; i++) {
-      var p = document.createElement('span');
-      p.className = 'px';
-      p.style.left = (Math.random() * 100) + '%';
-      p.style.animationDuration = (12 + Math.random() * 16) + 's';
-      p.style.animationDelay = (-Math.random() * 20) + 's';
-      box.appendChild(p);
-    }
+    var canvas = document.getElementById('embers');
+    var reduce = matchMedia('(prefers-reduced-motion: reduce)');
+    var ctx = canvas.getContext('2d');
+    var style = getComputedStyle(document.documentElement);
+    var colors = ['--ember', '--ember', '--ember-light', '--ember-deep'].map(function (v) { return style.getPropertyValue(v).trim(); });
+    var w = 0, h = 0, embers = [], raf = 0, last = 0;
+
+    var ember = function (anywhere) {
+      var near = Math.random();
+      return {
+        x: Math.random() * w,
+        y: anywhere ? Math.random() * h : h + 10,
+        size: 1.5 + near * near * 2.5,
+        vy: 10 + near * 22,
+        sway: 4 + Math.random() * 10,
+        phase: Math.random() * Math.PI * 2,
+        alpha: 0.35 + near * 0.55,
+        color: colors[Math.floor(Math.random() * colors.length)],
+      };
+    };
+    var resize = function () {
+      var cw = canvas.clientWidth, ch = canvas.clientHeight;
+      if (cw === w && ch === h) return;
+      w = cw; h = ch;
+      var dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var want = Math.max(14, Math.min(50, Math.round(w * h / 26000)));
+      while (embers.length < want) embers.push(ember(true));
+      embers.length = want;
+    };
+    var frame = function (now) {
+      raf = 0;
+      if (document.hidden || reduce.matches) return;
+      var dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+      last = now;
+      ctx.clearRect(0, 0, w, h);
+      for (var i = 0; i < embers.length; i++) {
+        var e = embers[i];
+        e.y -= e.vy * dt;
+        e.phase += dt * 1.2;
+        if (e.y < -10) { embers[i] = ember(false); continue; }
+        var x = e.x + Math.sin(e.phase) * e.sway;
+        // Fades out near the top of the screen, and flickers a little.
+        var a = e.alpha * Math.min(1, e.y / (h * 0.25)) * (0.75 + 0.25 * Math.sin(e.phase * 3));
+        if (a <= 0) continue;
+        ctx.fillStyle = e.color;
+        ctx.globalAlpha = a * 0.2;
+        ctx.fillRect(x - e.size * 1.5, e.y - e.size * 1.5, e.size * 3, e.size * 3);
+        ctx.globalAlpha = a;
+        ctx.fillRect(x - e.size / 2, e.y - e.size / 2, e.size, e.size);
+      }
+      ctx.globalAlpha = 1;
+      raf = requestAnimationFrame(frame);
+    };
+    var start = function () {
+      if (raf || document.hidden || reduce.matches) return;
+      last = 0;
+      raf = requestAnimationFrame(frame);
+    };
+    addEventListener('resize', resize);
+    document.addEventListener('visibilitychange', start);
+    if (reduce.addEventListener) reduce.addEventListener('change', start);
+    resize();
+    start();
   })();
   // Updates: the latest releases from GitHub, with their notes.
   (function () {
@@ -817,7 +678,7 @@
         }).join('');
       })
       .catch(function () {
-        box.innerHTML = '<p class="updates-loading">Couldn\'t load the updates right now - <a href="https://github.com/DowyClient/dowyclient.github.io/releases" style="color:var(--blue)">see them on GitHub</a>.</p>';
+        box.innerHTML = '<p class="updates-loading">Couldn\'t load the updates right now - <a href="https://github.com/DowyClient/dowyclient.github.io/releases" style="color:var(--ember-light)">see them on GitHub</a>.</p>';
       });
   })();
 
@@ -857,150 +718,26 @@
       .catch(function () { /* keep the plain line */ });
   })();
 
-  // ---------- Winter event ----------
+  // Halloween event: countdown to January 1, 2027 00:00 local time, then the banner hides itself.
   (function () {
-    var root = document.documentElement;
-    if (!root.classList.contains('winter')) return;
-    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    // Countdown to January 1, 2027; the theme switches off by itself when it ends.
-    var cd = { d: document.getElementById('cd-d'), h: document.getElementById('cd-h'), m: document.getElementById('cd-m'), s: document.getElementById('cd-s') };
+    var box = document.getElementById('event');
+    var end = new Date(2027, 0, 1).getTime();
+    var cdD = document.getElementById('cd-d'), cdH = document.getElementById('cd-h'), cdM = document.getElementById('cd-m');
     var pad = function (n) { return n < 10 ? '0' + n : String(n); };
+    var timer = 0;
     var tick = function () {
-      var left = Math.max(0, window.WINTER_END - Date.now());
-      if (!left) { root.classList.remove('winter'); return; }
-      var sec = Math.floor(left / 1000);
-      cd.d.textContent = Math.floor(sec / 86400);
-      cd.h.textContent = pad(Math.floor(sec % 86400 / 3600));
-      cd.m.textContent = pad(Math.floor(sec % 3600 / 60));
-      cd.s.textContent = pad(sec % 60);
-      setTimeout(tick, 1000 - (Date.now() % 1000));
+      clearTimeout(timer);
+      var left = end - Date.now();
+      box.hidden = left <= 0;
+      if (box.hidden) { document.removeEventListener('visibilitychange', tick); return; }
+      var mins = Math.ceil(left / 60000);
+      cdD.textContent = Math.floor(mins / 1440);
+      cdH.textContent = pad(Math.floor(mins % 1440 / 60));
+      cdM.textContent = pad(mins % 60);
+      timer = setTimeout(tick, left % 60000 || 60000);
     };
+    document.addEventListener('visibilitychange', tick);
     tick();
-
-    // Winter favicon: the Quake icon with a little snowflake.
-    var icon = new Image();
-    icon.onload = function () {
-      var c = document.createElement('canvas');
-      c.width = c.height = 64;
-      var g = c.getContext('2d');
-      g.drawImage(icon, 0, 0, 64, 64);
-      g.fillStyle = '#0b2a4a';
-      g.beginPath(); g.arc(48, 48, 15, 0, Math.PI * 2); g.fill();
-      g.strokeStyle = '#e9f8ff'; g.lineWidth = 3; g.lineCap = 'round';
-      for (var a = 0; a < 3; a++) {
-        var ang = a * Math.PI / 3;
-        g.beginPath(); g.moveTo(48 - Math.cos(ang) * 10, 48 - Math.sin(ang) * 10); g.lineTo(48 + Math.cos(ang) * 10, 48 + Math.sin(ang) * 10); g.stroke();
-      }
-      var link = document.querySelector('link[rel="icon"]');
-      if (link) link.href = c.toDataURL('image/png');
-    };
-    icon.src = 'assets/icon.png';
-
-    // ---- Snow: three depths of flakes, gentle wind, flakes drift away from the cursor,
-    // frost sparkles behind the cursor, and a burst when you click the icon.
-    var canvas = document.getElementById('snow');
-    var toggle = document.getElementById('snow-toggle');
-    var on = true;
-    try { on = localStorage.getItem('dowy.snow') !== 'off'; } catch (e) { /* storage blocked */ }
-    if (reduce) on = false;
-    var ctx = canvas.getContext('2d');
-    var w = 0, h = 0, dpr = 1, flakes = [], sparks = [], raf = 0, last = 0, t = 0;
-    var mouse = { x: -999, y: -999 };
-
-    var flake = function (anywhere) {
-      var depth = Math.random();
-      return {
-        x: Math.random() * w,
-        y: anywhere ? Math.random() * h : -10 - Math.random() * 40,
-        r: 0.8 + depth * depth * 3.2,
-        vy: 0.35 + depth * 1.1,
-        depth: depth,
-        phase: Math.random() * Math.PI * 2,
-        swing: 0.3 + Math.random() * 0.8,
-        vx: 0,
-        a: 0.35 + depth * 0.55,
-      };
-    };
-    var resize = function () {
-      dpr = Math.min(2, window.devicePixelRatio || 1);
-      w = innerWidth; h = innerHeight;
-      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
-      canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      var want = Math.round(Math.min(220, (w * h) / 7500));
-      while (flakes.length < want) flakes.push(flake(true));
-      flakes.length = want;
-    };
-    var frame = function (now) {
-      raf = 0;
-      if (!on || document.hidden) return;
-      var dt = last ? Math.min(3, (now - last) / 16.67) : 1;
-      last = now; t += dt;
-      var wind = Math.sin(t * 0.004) * 0.6 + Math.sin(t * 0.0013) * 0.4;
-      ctx.clearRect(0, 0, w, h);
-      for (var i = 0; i < flakes.length; i++) {
-        var f = flakes[i];
-        // Pushed away from the cursor (the near flakes more).
-        var dx = f.x - mouse.x, dy = f.y - mouse.y, d2 = dx * dx + dy * dy;
-        if (d2 < 9000) { var d = Math.sqrt(d2) || 1, push = (1 - d / 95) * 0.9 * (0.4 + f.depth); f.vx += dx / d * push; f.y += dy / d * push * 0.4; }
-        f.vx *= 0.94;
-        f.phase += 0.02 * dt;
-        f.x += (wind * (0.4 + f.depth) + Math.sin(f.phase) * f.swing * 0.5 + f.vx) * dt;
-        f.y += f.vy * dt;
-        if (f.y > h + 10 || f.x < -20 || f.x > w + 20) { var n = flake(false); n.x = Math.random() * w; flakes[i] = n; continue; }
-        ctx.globalAlpha = f.a;
-        ctx.fillStyle = '#ffffff';
-        if (f.r > 2.6) { ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(200,235,255,0.9)'; } else ctx.shadowBlur = 0;
-        ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
-      }
-      ctx.shadowBlur = 0;
-      for (var j = sparks.length - 1; j >= 0; j--) {
-        var s = sparks[j];
-        s.life -= dt; s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 0.03 * dt;
-        if (s.life <= 0) { sparks.splice(j, 1); continue; }
-        ctx.globalAlpha = Math.min(1, s.life / 25) * 0.9;
-        ctx.fillStyle = s.c;
-        var z = s.size * (0.6 + 0.4 * Math.sin(s.life * 0.4));
-        ctx.fillRect(s.x - z / 2, s.y - z / 2, z, z); // tiny pixel sparkle
-      }
-      ctx.globalAlpha = 1;
-      raf = requestAnimationFrame(frame);
-    };
-    var start = function () { if (on && !raf) { last = 0; raf = requestAnimationFrame(frame); } };
-    var apply = function () {
-      root.classList.toggle('snow-off', !on);
-      toggle.setAttribute('aria-pressed', String(on));
-      if (on) start(); else ctx.clearRect(0, 0, w, h);
-    };
-    addEventListener('resize', resize);
-    document.addEventListener('visibilitychange', start);
-    addEventListener('pointermove', function (e) {
-      mouse.x = e.clientX; mouse.y = e.clientY;
-      if (on && sparks.length < 90 && Math.random() < 0.55) {
-        sparks.push({ x: e.clientX, y: e.clientY, vx: (Math.random() - 0.5) * 0.8, vy: (Math.random() - 0.5) * 0.8, life: 30 + Math.random() * 20, size: 2 + Math.random() * 2.5, c: Math.random() < 0.5 ? '#ffffff' : '#9fe0ff' });
-      }
-    }, { passive: true });
-    document.addEventListener('pointerleave', function () { mouse.x = mouse.y = -999; });
-    toggle.addEventListener('click', function () {
-      on = !on;
-      try { localStorage.setItem('dowy.snow', on ? 'on' : 'off'); } catch (e) { /* storage blocked */ }
-      apply();
-    });
-    // Click the icon: a burst of snow and sparkles.
-    var wrap = document.getElementById('logo-wrap');
-    wrap.addEventListener('click', function () {
-      wrap.classList.remove('pop'); void wrap.offsetWidth; wrap.classList.add('pop');
-      if (!on) return;
-      var r = wrap.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-      for (var k = 0; k < 60; k++) {
-        var ang = Math.random() * Math.PI * 2, sp = 1 + Math.random() * 4;
-        sparks.push({ x: cx, y: cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 1.5, life: 50 + Math.random() * 40, size: 3 + Math.random() * 4, c: k % 3 ? '#ffffff' : '#9fe0ff' });
-      }
-      start();
-    });
-    resize();
-    apply();
   })();
 
   // Card spotlight follows the cursor
